@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html data-theme="dark" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Análisis Espectral v2.2 | Hartmann UI Unificada</title>
+
+<!-- Google Fonts y Font Awesome -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<!-- Librerías para Gráficos y PDF -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+    :root {
+        --bg-primary: #1a1a1a; --bg-secondary: #2c2c2c; --bg-header: #222;
+        --text-primary: #f0f0f0; --text-secondary: #b3b3b3; --border-color: #444;
+        --accent-color: #8a77ff; --accent-hover: #9d8cff; --green: #2ecc71;
+        --red: #e74c3c; --blue: #3498db; --purple: #9b59b6; --orange: #f39c12;
+        --whatsapp-color: #25D366; --whatsapp-hover: #1EBE56;
+        --shadow: 0 4px 15px rgba(0, 0, 0, 0.3); --shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.5);
+        --chart-grid-color: rgba(255, 255, 255, 0.1); --chart-text-color: var(--text-secondary);
+    }
+    [data-theme="light"] {
+        --bg-primary: #f4f4f9; --bg-secondary: #ffffff; --bg-header: #ffffff;
+        --text-primary: #1a1a1a; --text-secondary: #555555; --border-color: #dddddd;
+        --accent-color: #7965f0; --accent-hover: #5d4cdb; --green: #28a745;
+        --red: #dc3545; --blue: #007bff; --purple: #6f42c1; --orange: #fd7e14;
+        --whatsapp-color: #25D366; --whatsapp-hover: #20b859;
+        --shadow: 0 4px 15px rgba(0, 0, 0, 0.08); --shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.12);
+        --chart-grid-color: rgba(0, 0, 0, 0.08); --chart-text-color: var(--text-secondary);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+        font-family: 'Roboto', sans-serif; background-color: var(--bg-primary);
+        color: var(--text-primary); line-height: 1.6; padding-bottom: 50px;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    .container { max-width: 1400px; margin: 20px auto; padding: 15px; }
+    header {
+        display: flex; justify-content: space-between; align-items: center;
+        background-color: var(--bg-header); color: var(--text-primary);
+        padding: 1rem 3%; border-bottom: 1px solid var(--border-color);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: background-color 0.3s ease, border-color 0.3s ease;
+        gap: 15px;
+    }
+    .back-link {
+        color: var(--text-secondary); text-decoration: none; font-size: 1rem;
+        display: flex; align-items: center; gap: 8px; transition: color 0.3s ease;
+        white-space: nowrap;
+    }
+    .back-link:hover { color: var(--accent-color); }
+    .back-link i { font-size: 1.2rem; }
+    .header-title { text-align: center; }
+    header h1 { font-size: 1.8rem; margin: 0; font-weight: 700; }
+    header p { color: var(--text-secondary); margin-top: 2px; font-size: 0.9rem; }
+    #theme-toggle {
+        background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color);
+        border-radius: 50%; width: 45px; height: 45px; cursor: pointer; font-size: 1.3rem;
+        display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;
+        flex-shrink: 0;
+    }
+    #theme-toggle:hover { transform: scale(1.1) rotate(15deg); }
+    .card {
+        background-color: var(--bg-secondary); border: 1px solid var(--border-color);
+        border-radius: 12px; padding: 25px; margin-top: 25px; box-shadow: var(--shadow); 
+        transition: all 0.3s ease;
+    }
+    .card h3 {
+        font-size: 1.3rem;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--accent-color);
+    }
+    .tabs { display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 25px; }
+    .tab-button {
+        padding: 12px 25px; cursor: pointer; border: none; background-color: transparent;
+        font-size: 1.1rem; font-weight: 500; color: var(--text-secondary);
+        border-bottom: 4px solid transparent; transition: all 0.3s ease;
+    }
+    .tab-button.active { color: var(--accent-color); border-bottom-color: var(--accent-color); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeIn 0.5s; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    
+    .analysis-grid {
+        display: grid;
+        grid-template-columns: minmax(320px, 1fr) 1.8fr;
+        gap: 25px;
+    }
+    .controls-panel { display: flex; flex-direction: column; gap: 25px; margin-top: 25px; }
+    .controls-panel .card { margin-top: 0; }
+
+    .input-group-region {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+    label {
+        display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+    input, select, textarea {
+        width: 100%; padding: 12px; font-size: 1rem; background-color: var(--bg-primary);
+        border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary);
+        transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    input:focus, select:focus, textarea:focus {
+        outline: none; border-color: var(--accent-color);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 25%, transparent);
+    }
+    .btn {
+        padding: 12px 15px; font-size: 1rem; font-weight: 500; border-radius: 8px; border: none;
+        color: white; cursor: pointer; transition: all 0.3s ease; display: flex;
+        align-items: center; justify-content: center; gap: 10px;
+        -webkit-tap-highlight-color: transparent; box-shadow: var(--shadow);
+        text-decoration: none;
+    }
+    .btn:hover { opacity: 0.95; transform: translateY(-3px); box-shadow: var(--shadow-hover); }
+    .btn.disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+    .btn-main { background-color: var(--accent-color); } .btn-main:hover { background-color: var(--accent-hover); }
+    .btn-secondary { background-color: #7f8c8d; } .btn-secondary:hover { background-color: #95a5a6; }
+    .btn-action { background-color: var(--blue); } .btn-action:hover { background-color: #3d8bdb; }
+    .btn-export { background-color: var(--purple); } .btn-export.csv { background-color: var(--green); }
+    .btn-export.img { background-color: var(--orange); }
+    .btn-whatsapp { background-color: var(--whatsapp-color); } .btn-whatsapp:hover { background-color: var(--whatsapp-hover); }
+
+    .sub-tabs { display: flex; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); }
+    .sub-tab-btn {
+        padding: 8px 15px; cursor: pointer; border: none; background: none; color: var(--text-secondary);
+        font-size: 0.95em; border-bottom: 2px solid transparent;
+    }
+    .sub-tab-btn.active { color: var(--accent-color); border-bottom-color: var(--accent-color); }
+    .sub-tab-content { display: none; }
+    .sub-tab-content.active { display: block; }
+
+    .point-list {
+        list-style-type: none; padding-left: 0; font-size: 0.9em; max-height: 120px; overflow-y: auto;
+        background-color: var(--bg-primary); padding: 10px; border-radius: 8px; margin-top: 15px;
+    }
+    .point-list li { margin-bottom: 5px; padding: 5px; border-radius: 4px; }
+
+    #predictionTable, #reference-table {
+        width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem;
+    }
+    #predictionTable th, #predictionTable td, #reference-table th, #reference-table td {
+        padding: 10px 12px; text-align: center; border: 1px solid var(--border-color);
+    }
+    #predictionTable th, #reference-table th { background-color: #343a40; color: #f8f9fa; font-weight: 500;}
+    #predictionTable tbody tr:hover, #reference-table tbody tr:hover { background-color: rgba(127, 140, 141, 0.1); }
+    
+    .chart-container { position: relative; height: 550px; width: 100%; background-color: var(--bg-secondary); border-radius: 12px; padding: 20px; box-shadow: var(--shadow); }
+
+    /* Identification Tab Styles */
+    .mode-switch { display: flex; justify-content: center; margin-bottom: 15px; }
+    .mode-btn {
+        padding: 10px 20px; border: 1px solid var(--border-color); background-color: var(--bg-secondary);
+        color: var(--text-secondary); cursor: pointer; transition: all 0.2s; font-size: 1rem;
+    }
+    .mode-btn:first-child { border-radius: 8px 0 0 8px; }
+    .mode-btn:last-child { border-radius: 0 8px 8px 0; margin-left: -1px; }
+    .mode-btn.active { background-color: var(--accent-color); color: white; border-color: var(--accent-color); }
+    
+    .spectrum-display {
+        height: 70px; border-radius: 5px; margin-bottom: 25px; overflow: visible;
+        position: relative; transition: background 0.3s; cursor: crosshair;
+    }
+    .spectrum-display .line {
+        position: absolute; top: 0; width: 2px; height: 100%; transform: translateX(-50%);
+    }
+    .spectrum-display .wavelength-label {
+        position: absolute; bottom: -20px; transform: translateX(-50%); font-size: 10px; color: var(--text-secondary);
+    }
+    .spectrum-display .reference-marker {
+        position: absolute; top: 0; height: 100%; width: 1px; background-color: var(--red);
+        opacity: 0.8; display: none; pointer-events: none;
+    }
+    .spectrum-display .wavelength-indicator {
+        position: absolute; top: 5px; background-color: rgba(0,0,0,0.7); color: white;
+        padding: 2px 5px; border-radius: 3px; font-size: 11px; display: none;
+        pointer-events: none; white-space: nowrap; z-index: 10;
+    }
+    #identification-result span { font-weight: bold; color: var(--accent-color); }
+
+    /* Chatbot Styles */
+    .api-warning {
+        color: var(--orange); background-color: color-mix(in srgb, var(--orange) 10%, transparent);
+        padding: 15px; border-radius: 8px; border: 1px solid var(--orange);
+        margin-bottom: 15px; font-size: 0.9em;
+    }
+    .api-warning a { color: var(--accent-hover); font-weight: bold; }
+    #chat-window {
+        height: 400px; overflow-y: auto; padding: 15px; background-color: var(--bg-primary);
+        border-radius: 8px; margin-bottom: 15px; border: 1px solid var(--border-color);
+        display: flex; flex-direction: column; gap: 10px;
+    }
+    .chat-message { padding: 10px 15px; border-radius: 12px; max-width: 85%; line-height: 1.5; white-space: pre-wrap; }
+    .user-message { background-color: var(--accent-color); color: white; margin-left: auto; border-bottom-right-radius: 2px; align-self: flex-end;}
+    .bot-message { background-color: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); margin-right: auto; border-bottom-left-radius: 2px; align-self: flex-start;}
+    .bot-message.typing { font-style: italic; color: var(--text-secondary); }
+    #chat-input-container { display: flex; gap: 10px; }
+
+    /* Modal Styles */
+    .modal {
+        display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
+        overflow: auto; background-color: rgba(0,0,0,0.7);
+        align-items: center; justify-content: center;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+        background-color: var(--bg-secondary); margin: auto; padding: 30px; border: 1px solid var(--border-color);
+        width: 90%; max-width: 700px; border-radius: 12px; position: relative; box-shadow: var(--shadow-hover);
+    }
+    .modal-content h2 { color: var(--accent-color); margin-top: 0; margin-bottom: 15px; }
+    .modal-content p, .modal-content li { line-height: 1.7; color: var(--text-secondary); margin-bottom: 10px; }
+    .modal-content ul { padding-left: 20px; }
+    .modal-content hr { border: none; height: 1px; background-color: var(--border-color); margin: 20px 0; }
+    .close-button {
+        color: var(--text-secondary); position: absolute; top: 15px; right: 20px;
+        font-size: 28px; font-weight: bold; cursor: pointer;
+    }
+    .close-button:hover { color: var(--text-primary); }
+
+    .main-footer {
+        text-align: center; padding: 2rem 1rem; margin-top: 40px;
+        border-top: 1px solid var(--border-color); color: var(--text-secondary); font-size: 0.9rem;
+    }
+
+    @media (max-width: 1200px) {
+        .analysis-grid { grid-template-columns: 1fr; }
+        .chart-container { height: 450px; }
+    }
+    @media (max-width: 768px) {
+        header { flex-direction: column; gap: 10px; padding: 0.75rem 5%; }
+        .back-link span { display: none; }
+        header h1 { font-size: 1.3rem; } header p { font-size: 0.8rem; }
+        .tab-button { padding: 10px 15px; font-size: 1rem; }
+        .input-group-region { grid-template-columns: 1fr; }
+        .modal-content { width: 95%; padding: 20px; }
+        #chat-window { height: 300px; }
+    }
+</style>
+</head>
+<body>
+
+<header>
+    <a href="index.html#experimentos" class="back-link" title="Volver a la página de experimentos">
+        <i class="fas fa-arrow-left"></i>
+        <span>Volver a Experimentos</span>
+    </a>
+    <div class="header-title">
+        <h1>Análisis Espectral por Interpolación</h1>
+        <p>Fórmula de Hartmann | FaCENA – UNNE</p>
+    </div>
+    <button id="theme-toggle" title="Cambiar tema">☀️</button>
+</header>
+
+<div class="container">
+    <div class="tabs">
+        <button class="tab-button active" data-tab="hartmann">1. Calibración y Análisis</button>
+        <button class="tab-button" data-tab="identification">2. Comparación e Identificación</button>
+        <button class="tab-button" data-tab="chatbot">3. Chatbot IA</button>
+    </div>
+
+    <!-- Pestaña 1: Calibración y Análisis -->
+    <div id="hartmann" class="tab-content active">
+        <div class="analysis-grid">
+            <div class="controls-panel">
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3><i class="fa-solid fa-ruler-combined"></i> Calibración</h3>
+                        <button id="loadHgCalBtn" class="btn btn-secondary" style="width: auto; margin: 0;"><i class="fa-solid fa-vial"></i> Cargar Hg</button>
+                    </div>
+                    <div class="sub-tabs">
+                        <button class="sub-tab-btn active" data-tab="region1">Región 1</button>
+                        <button class="sub-tab-btn" data-tab="region2">Región 2</button>
+                    </div>
+                    <div id="region1" class="sub-tab-content active">
+                        <div class="input-group-region">
+                            <input type="text" id="lambda_r1" placeholder="λ (nm)">
+                            <input type="text" id="d_r1" placeholder="d (cm)">
+                        </div>
+                        <button id="add_r1_btn" class="btn btn-action" style="margin: 15px 0 0;"><i class="fa-solid fa-plus"></i> Añadir Punto a Región 1</button>
+                        <ul id="points_r1_list" class="point-list"></ul>
+                    </div>
+                    <div id="region2" class="sub-tab-content">
+                        <div class="input-group-region">
+                            <input type="text" id="lambda_r2" placeholder="λ (nm)">
+                            <input type="text" id="d_r2" placeholder="d (cm)">
+                        </div>
+                        <button id="add_r2_btn" class="btn btn-action" style="margin: 15px 0 0;"><i class="fa-solid fa-plus"></i> Añadir Punto a Región 2</button>
+                        <ul id="points_r2_list" class="point-list"></ul>
+                    </div>
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                        <button id="calculateBtn" class="btn btn-main" style="width: 100%;"><i class="fa-solid fa-calculator"></i> CALCULAR CONSTANTES Y GRAFICAR</button>
+                        <div id="resultsDisplay" style="margin-top: 15px; font-size: 0.9em; line-height: 1.8;"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3><i class="fa-solid fa-magnifying-glass-chart"></i> Predicción de Líneas</h3>
+                    <label for="dPredict">Ingresar d (cm) para predecir λ (nm):
+                        <div style="display: flex; gap: 10px; margin-top: 8px;">
+                            <input type="text" id="dPredict" placeholder="Ej: 5.0, 5.5, 6.0">
+                            <button id="addPointBtn" class="btn btn-main" style="flex-shrink: 0; width: auto;"><i class="fa-solid fa-arrow-right-to-bracket"></i></button>
+                        </div>
+                    </label>
+                    <p style="font-size:0.8em; color:var(--text-secondary); margin-top: 5px;">Separe múltiples valores con comas.</p>
+                    <div style="max-height: 250px; overflow-y: auto; margin-top: 15px;">
+                        <table id="predictionTable">
+                            <thead><tr><th>N°</th><th>d (cm)</th><th>λ (nm)</th><th>Color</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <button id="clearPredictionsBtn" class="btn btn-secondary" style="margin-top: 15px; width: 100%;"><i class="fa-solid fa-trash-can"></i> Limpiar Predicciones</button>
+                </div>
+                 <div class="card">
+                    <h3><i class="fa-solid fa-cogs"></i> Opciones</h3>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button class="btn btn-export csv" id="exportCsvBtn"><i class="fa-solid fa-file-csv"></i> Exportar Datos (CSV)</button>
+                        <button class="btn btn-export" id="generatePdfBtn"><i class="fa-solid fa-file-pdf"></i> Generar Informe (PDF)</button>
+                        <button class="btn btn-export img" id="downloadChartImgBtn"><i class="fa-solid fa-image"></i> Descargar Gráfico (PNG)</button>
+                        <!-- ===== BOTÓN NUEVO AQUÍ ===== -->
+                        <a id="whatsappShareBtn" href="#" target="_blank" class="btn btn-whatsapp disabled"><i class="fab fa-whatsapp"></i> Compartir por WhatsApp</a>
+                        <button class="btn btn-secondary" id="guideBtn"><i class="fa-solid fa-circle-question"></i> Ayuda y Guía de Uso</button>
+                    </div>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="hartmannChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pestaña 2: Identificación -->
+    <div id="identification" class="tab-content">
+        <div class="analysis-grid">
+            <div class="controls-panel">
+                <div class="card">
+                    <h3><i class="fa-solid fa-flask-vial"></i> Análisis de Muestra</h3>
+                    <p style="color:var(--text-secondary); text-align: center; margin-bottom: 20px;">Use las predicciones de la Pestaña 1 como la muestra desconocida.</p>
+                    <button id="identifyBtn" class="btn btn-main" style="width:100%"><i class="fa-solid fa-atom"></i> Identificar Muestra</button>
+                    <div id="identification-result" style="margin-top: 15px; text-align: center; font-size: 1.1rem;">Aún no se ha analizado ninguna muestra.</div>
+                </div>
+                <div class="card">
+                    <h3><i class="fa-solid fa-book"></i> Referencia (NIST)</h3>
+                    <label for="theoreticalElementSelect">Comparar con el espectro de:</label>
+                    <select id="theoreticalElementSelect"></select>
+                </div>
+                 <div class="card">
+                    <h3><i class="fa-solid fa-table-list"></i> Líneas Espectrales de Referencia</h3>
+                    <div id="reference-table-container" style="max-height: 280px; overflow-y: auto;"></div>
+                 </div>
+            </div>
+            
+            <div class="card" style="margin-top:25px;">
+                <h3><i class="fa-solid fa-eye"></i> Visualizador de Espectros</h3>
+                 <div class="mode-switch">
+                    <button id="emissionBtn" class="mode-btn active">Emisión</button>
+                    <button id="absorptionBtn" class="mode-btn">Absorción</button>
+                 </div>
+                 
+                <h4>Espectro Medido (Predicciones)</h4>
+                <div id="measured-spectrum-container" class="spectrum-display"></div>
+                
+                <h4 style="margin-top: 20px;">Referencia NITS</h4>
+                <div id="theoretical-spectrum-container" class="spectrum-display"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pestaña 3: Chatbot IA -->
+    <div id="chatbot" class="tab-content">
+         <div class="card">
+            <h3><i class="fa-solid fa-robot"></i> Chatbot IA (Experimental)</h3>
+            <p class="api-warning"><b>ADVERTENCIA:</b> Esta función envía tu conversación a la API de Google Gemini. Necesitas tu propia API Key de Google AI Studio. <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">Obtén tu API Key aquí</a>. No la guardes en el código.</p>
+            
+            <label for="apiKey">Google AI API Key:</label>
+            <input type="password" id="apiKey" placeholder="Pega tu API Key aquí" style="margin-bottom: 20px;">
+
+            <div id="chat-window">
+                <div class="bot-message">Hola, soy un asistente especializado en este código HTML. Puedes preguntarme sobre su estructura, funciones o cualquier parte del mismo.</div>
+            </div>
+            <div id="chat-input-container">
+                <input type="text" id="chat-input" placeholder="Escribe tu mensaje...">
+                <button id="send-chat-btn" class="btn btn-main" style="width: auto;">Enviar <i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="main-footer">
+    <p>© 2025 Complemento de Laboratorio. Derechos reservados por Bonifacio Fernández.</p>
+</footer>
+
+<!-- MODALES -->
+<div id="guideModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button" data-modal="guideModal">&times;</span>
+        <h2><i class="fa-solid fa-circle-question" style="color: var(--accent-color);"></i> Guía de Uso Rápido</h2>
+        <p>Esta aplicación permite calibrar un espectrómetro virtual utilizando la fórmula de Hartmann y luego determinar longitudes de onda desconocidas.</p>
+        <h4>1. Calibración de Constantes</h4>
+        <ul>
+            <li><b>Datos de Calibración:</b> En la pestaña "Calibración", ingrese al menos tres (3) pares de datos: λ (en nm) y d (en cm) para cada región.</li>
+            <li><b>Cargar Hg (Opcional):</b> Use este botón para autocompletar con datos de calibración de Mercurio.</li>
+            <li><b>Calcular Constantes:</b> Presione para resolver el sistema y encontrar λ₀, C, y d₀. Los resultados y el gráfico se actualizarán.</li>
+        </ul>
+        <hr>
+        <h4>2. Predicción de Líneas Desconocidas</h4>
+        <ul>
+            <li><b>Ingresar d (cm):</b> Introduzca una o más posiciones 'd' (en cm) de líneas desconocidas, separadas por comas.</li>
+            <li><b>Añadir:</b> Presione el botón de la flecha para calcular λ, estimar el color y añadirlo a la tabla y al gráfico.</li>
+        </ul>
+        <hr>
+        <h4>3. Comparación e Identificación</h4>
+        <ul>
+            <li>Vaya a la pestaña "Comparación e Identificación".</li>
+            <li>Pulse <b>Identificar Muestra</b> para comparar sus predicciones con una base de datos y encontrar la mejor coincidencia.</li>
+            <li>Seleccione un elemento del menú desplegable para ver su espectro teórico y compararlo visualmente con su muestra.</li>
+        </ul>
+         <hr>
+        <button id="theoryBtn" class="btn btn-secondary"><i class="fa-solid fa-book-open"></i> Ver Fundamento Teórico</button>
+    </div>
+</div>
+
+<div id="theoryModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button" data-modal="theoryModal">&times;</span>
+        <h2><i class="fa-solid fa-book-open" style="color: var(--accent-color);"></i> Fundamento Teórico</h2>
+        <p>La calibración de espectrómetros con prismas a menudo utiliza la <b>Fórmula de Hartmann</b>, una relación empírica que conecta la longitud de onda (λ) con su posición medida (d) en el detector:</p>
+        <p style="text-align: center; font-style: italic; font-size: 1.2em; color: var(--text-primary); background: var(--bg-primary); padding: 10px; border-radius: 8px;">λ = λ₀ + C / (d - d₀)</p>
+        <ul>
+            <li><b>λ</b>: Longitud de onda de la línea espectral (nm).</li>
+            <li><b>d</b>: Posición física medida de la línea en la escala del instrumento (cm).</li>
+            <li><b>λ₀, C, y d₀</b>: Constantes de Hartmann, características del instrumento.</li>
+        </ul>
+        <p>Se necesitan al menos tres líneas de calibración con (λ, d) conocidas para resolver el sistema de ecuaciones y hallar las tres constantes. Una vez obtenidas, la fórmula permite calcular cualquier λ desconocida a partir de su 'd' medida.</p>
+        <hr>
+        <h4>Cálculo en la Aplicación</h4>
+        <ul>
+            <li><strong>Entrada:</strong> Requiere un mínimo de tres pares (λ, d) por región.</li>
+            <li><strong>Resolución:</strong> La aplicación resuelve algebraicamente el sistema de 3 ecuaciones con 3 incógnitas para encontrar (λ₀, C, d₀).</li>
+            <li><strong>Verificación:</strong> Se comprueba que los valores 'd' sean distintos para evitar inestabilidad numérica y se previene la división por cero si 'd' es cercano a 'd₀'.</li>
+        </ul>
+    </div>
+</div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    let state = {};
+    const knownSpectra = {
+        "Mercurio (Hg)": [
+            { w: 404.66, i: 10, color_name: "Violeta", intensity_str: "Muy fuerte" }, { w: 407.78, i: 10, color_name: "Violeta", intensity_str: "Muy fuerte" }, { w: 434.75, i: 6, color_name: "Violeta", intensity_str: "Media" }, { w: 435.83, i: 10, color_name: "Azul-violeta", intensity_str: "Muy fuerte" }, { w: 491.60, i: 2, color_name: "Azul", intensity_str: "Muy débil" }, { w: 546.08, i: 10, color_name: "Verde", intensity_str: "Muy fuerte" }, { w: 576.96, i: 8, color_name: "Amarillo", intensity_str: "Fuerte" }, { w: 579.07, i: 8, color_name: "Amarillo", intensity_str: "Fuerte" }, { w: 607.27, i: 2, color_name: "Naranja", intensity_str: "Muy débil" }, { w: 623.44, i: 2, color_name: "Rojo", intensity_str: "Muy débil" }, { w: 671.64, i: 2, color_name: "Rojo", intensity_str: "Muy débil" }
+        ],
+        "Neón (Ne)": [
+            { w: 540.06, i: 6, color_name: "Verde", intensity_str: "Media" }, { w: 585.25, i: 8, color_name: "Amarillo", intensity_str: "Fuerte" }, { w: 588.19, i: 8, color_name: "Amarillo", intensity_str: "Fuerte" }, { w: 603.00, i: 6, color_name: "Naranja", intensity_str: "Media" }, { w: 612.85, i: 6, color_name: "Naranja-rojo", intensity_str: "Media" }, { w: 626.65, i: 6, color_name: "Rojo", intensity_str: "Media" }, { w: 633.44, i: 8, color_name: "Rojo", intensity_str: "Fuerte" }, { w: 638.30, i: 6, color_name: "Rojo", intensity_str: "Media" }, { w: 650.65, i: 8, color_name: "Rojo", intensity_str: "Fuerte" }, { w: 703.24, i: 6, color_name: "Rojo", intensity_str: "Media" }
+        ],
+        "Sodio (Na)": [
+            { w: 568.27, i: 6, color_name: "Amarillo-verdoso", intensity_str: "Media" }, { w: 568.82, i: 6, color_name: "Amarillo-verdoso", intensity_str: "Media" }, { w: 589.00, i: 10, color_name: "Amarillo", intensity_str: "Muy fuerte" }, { w: 589.59, i: 10, color_name: "Amarillo", intensity_str: "Muy fuerte" }, { w: 615.42, i: 6, color_name: "Naranja", intensity_str: "Media" }, { w: 616.07, i: 6, color_name: "Naranja", intensity_str: "Media" }
+        ],
+        "Hidrógeno (H)": [
+            { w: 656.3, i: 10, color_name: "Rojo", intensity_str: "Fuerte" }, { w: 486.1, i: 8, color_name: "Azul-verdoso", intensity_str: "Media" }, { w: 434.0, i: 6, color_name: "Violeta", intensity_str: "Débil" }
+        ],
+        "Helio (He)": [
+            { w: 447.15, i: 8, color_name: "Azul", intensity_str: "Fuerte" }, { w: 471.31, i: 4, color_name: "Azul-verdoso", intensity_str: "Débil" }, { w: 492.19, i: 6, color_name: "Verde-azulado", intensity_str: "Media" }, { w: 501.57, i: 6, color_name: "Verde", intensity_str: "Media" }, { w: 587.56, i: 10, color_name: "Amarillo", intensity_str: "Muy fuerte" }, { w: 667.82, i: 8, color_name: "Rojo", intensity_str: "Fuerte" }, { w: 706.52, i: 6, color_name: "Rojo", intensity_str: "Media" }
+        ],
+        "Aluminio (Al)": [
+            { w: 444.8, i: 8, color_name: "Violeta", intensity_str: "Fuerte" }, { w: 458.8, i: 7, color_name: "Azul", intensity_str: "Media-Fuerte" }, { w: 464.9, i: 7, color_name: "Azul", intensity_str: "Media-Fuerte" }, { w: 466.7, i: 7, color_name: "Azul", intensity_str: "Media-Fuerte" }, { w: 559.3, i: 8, color_name: "Verde-Amarillo", intensity_str: "Fuerte" }, { w: 600.6, i: 8, color_name: "Naranja", intensity_str: "Fuerte" }
+        ],
+        "Argón (Ar)": [
+            { w: 434.8, i: 7, color_name: "Violeta", intensity_str: "Media-Fuerte" }, { w: 476.5, i: 8, color_name: "Azul", intensity_str: "Fuerte" }, { w: 488.0, i: 8, color_name: "Azul-Verde", intensity_str: "Fuerte" }, { w: 696.5, i: 10, color_name: "Rojo", intensity_str: "Muy Fuerte" }, { w: 706.7, i: 9, color_name: "Rojo", intensity_str: "Fuerte" }, { w: 714.7, i: 8, color_name: "Rojo", intensity_str: "Fuerte" }
+        ],
+        "Cadmio (Cd)": [
+            { w: 441.6, i: 8, color_name: "Violeta", intensity_str: "Fuerte" }, { w: 508.6, i: 7, color_name: "Verde", intensity_str: "Media-Fuerte" }, { w: 533.7, i: 7, color_name: "Verde", intensity_str: "Media-Fuerte" }, { w: 537.8, i: 7, color_name: "Verde", intensity_str: "Media-Fuerte" }, { w: 643.8, i: 8, color_name: "Rojo", intensity_str: "Fuerte" }, { w: 672.6, i: 8, color_name: "Rojo", intensity_str: "Fuerte" }
+        ],
+        "Litio (Li)": [
+            { w: 413.3, i: 7, color_name: "Violeta", intensity_str: "Media-Fuerte" }, { w: 427.3, i: 7, color_name: "Violeta", intensity_str: "Media-Fuerte" }, { w: 548.4, i: 7, color_name: "Verde", intensity_str: "Media-Fuerte" }, { w: 610.4, i: 8, color_name: "Naranja", intensity_str: "Fuerte" }, { w: 670.8, i: 10, color_name: "Rojo", intensity_str: "Muy Fuerte" }
+        ],
+        "Estroncio (Sr)": [
+            { w: 407.8, i: 8, color_name: "Violeta", intensity_str: "Fuerte" }, { w: 421.6, i: 8, color_name: "Violeta", intensity_str: "Fuerte" }, { w: 460.7, i: 7, color_name: "Azul", intensity_str: "Media-Fuerte" }, { w: 496.2, i: 7, color_name: "Verde-Azulado", intensity_str: "Media-Fuerte" }, { w: 548.1, i: 7, color_name: "Verde", intensity_str: "Media-Fuerte" }, { w: 640.8, i: 8, color_name: "Rojo", intensity_str: "Fuerte" }
+        ],
+    };
+    
+    const getEl = (id) => document.getElementById(id);
+    const tabs = document.querySelectorAll('.tab-button');
+    const tabPanes = document.querySelectorAll('.tab-content');
+    const calculateBtn = getEl('calculateBtn');
+    const resultsDisplay = getEl('resultsDisplay');
+    const addPointBtn = getEl('addPointBtn');
+    const predTableBody = getEl('predictionTable').querySelector('tbody');
+    const hartmannChartCanvas = getEl('hartmannChart');
+    const addR1Btn = getEl('add_r1_btn');
+    const addR2Btn = getEl('add_r2_btn');
+    const lambdaR1In = getEl('lambda_r1');
+    const dR1In = getEl('d_r1');
+    const listR1 = getEl('points_r1_list');
+    const lambdaR2In = getEl('lambda_r2');
+    const dR2In = getEl('d_r2');
+    const listR2 = getEl('points_r2_list');
+    const loadHgCalBtn = getEl('loadHgCalBtn'); 
+    const clearPredictionsBtn = getEl('clearPredictionsBtn'); 
+    const downloadChartImgBtn = getEl('downloadChartImgBtn');
+    
+    const identifyBtn = getEl('identifyBtn');
+    const identificationResult = getEl('identification-result');
+    const theoreticalElementSelect = getEl('theoreticalElementSelect');
+    const emissionBtn = getEl('emissionBtn');
+    const absorptionBtn = getEl('absorptionBtn');
+    const measuredSpectrumContainer = getEl('measured-spectrum-container');
+    const theoreticalSpectrumContainer = getEl('theoretical-spectrum-container');
+    const referenceTableContainer = getEl('reference-table-container');
+
+    const apiKeyInput = getEl('apiKey');
+    const chatWindow = getEl('chat-window');
+    const chatInput = getEl('chat-input');
+    const sendChatBtn = getEl('send-chat-btn');
+
+    const exportCsvBtn = getEl('exportCsvBtn');
+    const generatePdfBtn = getEl('generatePdfBtn');
+    const guideBtnEl = getEl('guideBtn');
+    const theoryBtnEl = getEl('theoryBtn');
+    const modals = document.querySelectorAll('.modal');
+    const whatsappShareBtn = getEl('whatsappShareBtn');
+
+    const solveHartmann = (inputPoints) => {
+        if (inputPoints.length < 3) return null;
+        const p = inputPoints.slice(0, 3);
+        if (p.some(point => isNaN(point.l) || isNaN(point.d))) return null;
+        if (p[0].d === p[1].d || p[1].d === p[2].d || p[0].d === p[2].d) {
+             if (p[0].d === p[1].d && p[1].d === p[2].d) return null;
+        }
+        const K1 = p[0].l * p[0].d - p[1].l * p[1].d, K2 = p[1].l * p[1].d - p[2].l * p[2].d;
+        const L1 = p[0].l - p[1].l, L2 = p[1].l - p[2].l;
+        const M1 = p[0].d - p[1].d, M2 = p[1].d - p[2].d;
+        const den = L2 * M1 - L1 * M2;
+        if (Math.abs(den) < 1e-12) return null;
+        const d0 = (K2 * M1 - K1 * M2) / den;
+        let l0;
+        if (Math.abs(M1) > 1e-12) l0 = (K1 - d0 * L1) / M1;
+        else if (Math.abs(M2) > 1e-12) l0 = (K2 - d0 * L2) / M2;
+        else return null;
+        const c = (p[0].l - l0) * (p[0].d - d0);
+        if ([l0, c, d0].some(isNaN) || [l0,c,d0].some(v => !isFinite(v))) return null;
+        return { l0, c, d0 };
+    };
+    
+    const predictLambda = (d) => {
+        let constantsToUse = null;
+        if (!state.boundary) constantsToUse = state.constantsR1 || state.constantsR2;
+        else if (d <= state.boundary && state.constantsR1) constantsToUse = state.constantsR1;
+        else if (d > state.boundary && state.constantsR2) constantsToUse = state.constantsR2;
+        else constantsToUse = state.constantsR1 || state.constantsR2;
+        if (!constantsToUse) return NaN;
+        const { l0, c, d0 } = constantsToUse;
+        if (Math.abs(d - d0) < 1e-7) return NaN; 
+        return l0 + c / (d - d0);
+    };
+
+    const estimateColor = (l) => {
+        if(isNaN(l)) return {n:"N/A", h:"#4a4a4a"};
+        if(l < 400) return {n:"UV", h:"#4a4a4a"};
+        if(l < 450) return {n:"Violeta", h:"#8A2BE2"};
+        if(l < 495) return {n:"Azul", h:"#3498db"};
+        if(l < 570) return {n:"Verde", h:"#2ecc71"};
+        if(l < 590) return {n:"Amarillo", h:"#f1c40f"};
+        if(l < 620) return {n:"Naranja", h:"#f39c12"};
+        if(l <= 750) return {n:"Rojo", h:"#e74c3c"};
+        return {n:"IR", h:"#4a4a4a"};
+    };
+
+    const renderCalPointList = (listElement, pointsArray) => {
+        listElement.innerHTML = pointsArray.map(p => `<li>λ: ${p.l.toFixed(2)}, d: ${p.d.toFixed(4)}</li>`).join('');
+    };
+
+    const renderMainUI = () => {
+        let resultsHTML = '';
+        const formatResult = (c, region) => `<b>Región ${region}:</b><br>λ₀ = <span>${c.l0.toFixed(4)}</span> nm<br>C = <span>${c.c.toExponential(4)}</span> nm·cm<br>d₀ = <span>${c.d0.toFixed(4)}</span> cm<br>`;
+        if (state.constantsR1) resultsHTML += formatResult(state.constantsR1, 1);
+        if (state.constantsR2) resultsHTML += formatResult(state.constantsR2, 2);
+        resultsDisplay.innerHTML = resultsHTML || "Aún no se han calculado constantes.";
+        
+        predTableBody.innerHTML = state.predPoints.map((p,i) => `<tr><td>${i+1}</td><td>${p.d.toFixed(4)}</td><td>${p.l.toFixed(2)}</td><td style="color:${p.c.h};font-weight:600;">${p.c.n}</td></tr>`).join('');
+        
+        renderCalPointList(listR1, state.calPointsR1);
+        renderCalPointList(listR2, state.calPointsR2);
+        
+        updateChart();
+    };
+
+    const updateChart = () => {
+        if (!state.chart) return;
+        const style = getComputedStyle(document.documentElement);
+        const textColor = style.getPropertyValue('--chart-text-color').trim();
+        const gridColor = style.getPropertyValue('--chart-grid-color').trim();
+
+        state.chart.options.scales.x.title.color = textColor;
+        state.chart.options.scales.y.title.color = textColor;
+        state.chart.options.scales.x.ticks.color = textColor;
+        state.chart.options.scales.y.ticks.color = textColor;
+        state.chart.options.scales.x.grid.color = gridColor;
+        state.chart.options.scales.y.grid.color = gridColor;
+        state.chart.options.plugins.legend.labels.color = textColor;
+        state.chart.options.plugins.title.color = textColor;
+
+        const ds = [];
+        if (state.calPointsR1.length > 0) ds.push({label:'Calib. Reg. 1', data: state.calPointsR1.map(p => ({x:p.d, y:p.l})), backgroundColor: 'rgba(52, 152, 219, 0.8)', pointRadius:7, pointStyle:'circle'});
+        if (state.calPointsR2.length > 0) ds.push({label:'Calib. Reg. 2', data: state.calPointsR2.map(p => ({x:p.d, y:p.l})), backgroundColor: 'rgba(46, 204, 113, 0.8)', pointRadius:7, pointStyle:'rect'});
+        if (state.predPoints.length > 0) ds.push({label:'Predicciones', data: state.predPoints.map(p => ({x:p.d, y:p.l})), backgroundColor: 'rgba(231, 76, 60, 0.8)', pointRadius:6});
+        
+        const plotHartmannLine = (constants, regionCalPoints, color, labelSuffix, regionId) => {
+            if (!constants || regionCalPoints.length < 3) return;
+            
+            // CORRECTED LOGIC: Filter prediction points to only include those relevant to the current region's curve
+            const relevantPredPoints = state.predPoints.filter(p => {
+                if (!state.boundary || !state.constantsR1 || !state.constantsR2) {
+                    return true;
+                }
+                if (regionId === 1) {
+                    return p.d <= state.boundary;
+                }
+                if (regionId === 2) {
+                    return p.d > state.boundary;
+                }
+                return false;
+            });
+
+            const allPoints = [...regionCalPoints, ...relevantPredPoints];
+            if (allPoints.length === 0) return;
+
+            const dValues = allPoints.map(p => p.d), dMin = Math.min(...dValues), dMax = Math.max(...dValues);
+            const padding = (dMax - dMin) * 0.1 || 0.2, dStart = dMin - padding, dEnd = dMax + padding;
+            const linePoints = [], numLinePoints = 200, step = (dEnd - dStart) / numLinePoints;
+            
+            for (let i = 0; i <= numLinePoints; i++) {
+                const d = dStart + i * step;
+                if (Math.abs(d - constants.d0) > 1e-5) {
+                    const l = constants.l0 + constants.c / (d - constants.d0);
+                    if (isFinite(l)) linePoints.push({ x: d, y: l });
+                }
+            }
+            
+            const finalSegments = [], sortedPoints = linePoints.sort((a,b) => a.x - b.x);
+            let currentSegment = [];
+            for (const point of sortedPoints) {
+                if (currentSegment.length > 0) {
+                    const prev_x = currentSegment[currentSegment.length - 1].x;
+                    if ((prev_x < constants.d0 && point.x > constants.d0) || (prev_x > constants.d0 && point.x < constants.d0)) {
+                        if (currentSegment.length > 1) finalSegments.push(currentSegment);
+                        currentSegment = [];
+                    }
+                }
+                currentSegment.push(point);
+            }
+            if (currentSegment.length > 1) finalSegments.push(currentSegment);
+            
+            finalSegments.forEach((segment, index) => {
+                 ds.push({label: `${labelSuffix}${finalSegments.length > 1 ? ` (tramo ${index+1})` : ''}`, data: segment, borderColor: color, borderWidth: 2.5, showLine: true, pointRadius:0, type:'line', fill:false, tension: 0.1});
+            });
+        };
+
+        if(state.constantsR1) plotHartmannLine(state.constantsR1, state.calPointsR1, 'rgb(52, 152, 219)', 'Ajuste Reg. 1', 1);
+        if(state.constantsR2) plotHartmannLine(state.constantsR2, state.calPointsR2, 'rgb(46, 204, 113)', 'Ajuste Reg. 2', 2);
+        
+        state.chart.data.datasets = ds;
+        state.chart.update();
+    };
+
+    const renderSpectrum = (container, spectrumData, mode) => {
+        const isAbsorption = mode === 'absorption';
+        container.style.background = isAbsorption ? 'linear-gradient(to right, #8A2BE2, #4169E1, #00BFFF, #00FF00, #FFFF00, #FFA500, #FF0000)' : '#000';
+        container.innerHTML = '<div class="reference-marker"></div><div class="wavelength-indicator"></div>';
+        const minW = 380, maxW = 750, range = maxW - minW;
+        spectrumData.forEach(p => {
+            if (p.l >= minW && p.l <= maxW) {
+                const pos = (p.l - minW) / range * 100;
+                const line = document.createElement('div');
+                line.className = 'line';
+                line.style.left = `${pos}%`;
+                line.style.backgroundColor = isAbsorption ? '#000' : p.c.h;
+                line.style.opacity = `${0.4 + (p.i || 10) / 16}`;
+                container.appendChild(line);
+            }
+        });
+        for (let wl = 400; wl <= 700; wl += 50) {
+            const pos = (wl - minW) / range * 100;
+            const label = document.createElement('div');
+            label.className = 'wavelength-label';
+            label.style.left = `${pos}%`;
+            label.textContent = wl;
+            container.appendChild(label);
+        }
+    };
+    
+    const renderReferenceTable = (element) => {
+        const data = knownSpectra[element];
+        if (!data || data.length === 0) {
+            referenceTableContainer.innerHTML = '<p>No hay datos detallados para este elemento.</p>';
+            return;
+        }
+        let tableHTML = `<table id="reference-table"><thead><tr><th>λ (nm)</th><th>Color</th><th>Intensidad</th></tr></thead><tbody>`;
+        data.forEach(line => {
+            const colorInfo = estimateColor(line.w);
+            tableHTML += `<tr><td>${line.w.toFixed(2)}</td><td style="color:${colorInfo.h}; font-weight:600;">${line.color_name || colorInfo.n}</td><td>${line.intensity_str || 'N/A'}</td></tr>`;
+        });
+        referenceTableContainer.innerHTML = tableHTML + '</tbody></table>';
+    };
+    
+    const renderIdentificationUI = () => {
+        emissionBtn.classList.toggle('active', state.identificationMode === 'emission');
+        absorptionBtn.classList.toggle('active', state.identificationMode === 'absorption');
+        const measuredSpectrum = state.predPoints.map(p => ({ l: p.l, c: p.c, i: 10 }));
+        renderSpectrum(measuredSpectrumContainer, measuredSpectrum, state.identificationMode);
+        const theoreticalData = knownSpectra[state.theoreticalElement];
+        const theoreticalSpectrum = theoreticalData ? theoreticalData.map(line => ({ l: line.w, c: estimateColor(line.w), i: line.i })) : [];
+        renderSpectrum(theoreticalSpectrumContainer, theoreticalSpectrum, state.identificationMode);
+        renderReferenceTable(state.theoreticalElement);
+    };
+
+    const init = () => {
+        state = {
+            constantsR1: null, constantsR2: null, calPointsR1: [], calPointsR2: [], predPoints: [], chart: null, boundary: null,
+            identificationMode: 'emission', theoreticalElement: 'Mercurio (Hg)',
+            identificationDetails: { element: "N/A", averageError: 0, hasBeenRun: false }
+        };
+        Object.keys(knownSpectra).sort().forEach(key => theoreticalElementSelect.add(new Option(key, key)));
+        theoreticalElementSelect.value = 'Mercurio (Hg)';
+
+        const chartOptions = {
+            responsive: true, maintainAspectRatio: false,
+            scales: {
+                x: {
+                    title: { display: true, text: 'Distancia d (cm)', font: { family: 'Roboto', size: 14 } },
+                    grid: { }, ticks: { font: { family: 'Roboto' } }
+                },
+                y: {
+                    title: { display: true, text: 'Longitud de Onda λ (nm)', font: { family: 'Roboto', size: 14 } },
+                    grid: { }, ticks: { font: { family: 'Roboto' } }
+                }
+            },
+            plugins: {
+                legend: { labels: { font: { family: 'Roboto', size: 12 } } },
+                title: { display: true, text: 'Curva de Calibración de Hartmann', font: { family: 'Roboto', size: 16, weight: 'bold' } },
+                tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', titleFont: { family: 'Roboto' }, bodyFont: { family: 'Roboto' } }
+            },
+            onHover: (event, chartElement) => { event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default'; }
+        };
+        state.chart = new Chart(hartmannChartCanvas.getContext('2d'), { type: 'scatter', data: { datasets:[] }, options: chartOptions });
+        
+        renderMainUI();
+        renderIdentificationUI();
+    };
+    
+    // --- EVENT LISTENERS ---
+    tabs.forEach(tab => tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        tabPanes.forEach(p => p.classList.remove('active'));
+        getEl(tab.dataset.tab).classList.add('active');
+    }));
+    
+    document.querySelectorAll('.sub-tab-btn').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.sub-tab-btn').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.sub-tab-content').forEach(c => c.classList.remove('active'));
+            tab.classList.add('active');
+            getEl(tab.dataset.tab).classList.add('active');
+        });
+    });
+
+    const addCalPoint = (region) => {
+        const [lambdaIn, dIn, pointsArr] = (region === 1) 
+            ? [lambdaR1In, dR1In, state.calPointsR1] 
+            : [lambdaR2In, dR2In, state.calPointsR2];
+        try {
+            const l = parseFloat(lambdaIn.value.replace(',', '.')), d = parseFloat(dIn.value.replace(',', '.'));
+            if(isNaN(l) || isNaN(d)) throw new Error('Datos inválidos');
+            if (pointsArr.some(p => p.l === l && p.d === d)) { alert("Este punto ya ha sido añadido."); return; }
+            pointsArr.push({l,d});
+            pointsArr.sort((a,b) => a.d - b.d);
+            lambdaIn.value = ''; dIn.value = ''; lambdaIn.focus();
+            renderMainUI();
+        } catch(e) { alert(e.message); }
+    };
+    addR1Btn.addEventListener('click', () => addCalPoint(1));
+    addR2Btn.addEventListener('click', () => addCalPoint(2));
+
+    calculateBtn.addEventListener('click', () => {
+        state.constantsR1 = state.constantsR2 = state.boundary = null;
+        let r1Calculated = false, r2Calculated = false;
+        if (state.calPointsR1.length >= 3) {
+            state.constantsR1 = solveHartmann(state.calPointsR1);
+            if (!state.constantsR1) alert('Región 1: No se pudieron calcular constantes. Verifique los puntos.'); else r1Calculated = true;
+        } else if (state.calPointsR1.length > 0) alert('Se necesitan al menos 3 puntos en la Región 1.');
+        if (state.calPointsR2.length >= 3) {
+            state.constantsR2 = solveHartmann(state.calPointsR2);
+            if (!state.constantsR2) alert('Región 2: No se pudieron calcular constantes. Verifique los puntos.'); else r2Calculated = true;
+        } else if (state.calPointsR2.length > 0) alert('Se necesitan al menos 3 puntos en la Región 2.');
+
+        if (r1Calculated && r2Calculated) {
+            const max_d_r1 = Math.max(...state.calPointsR1.map(p => p.d)), min_d_r2 = Math.min(...state.calPointsR2.map(p => p.d));
+            if (max_d_r1 >= min_d_r2) alert("Advertencia: Las regiones se superponen o están en orden incorrecto (d_max_R1 >= d_min_R2).");
+            state.boundary = (max_d_r1 + min_d_r2) / 2;
+        }
+        renderMainUI();
+    });
+
+    const updateWhatsAppButton = (active, message = '') => {
+        if (active) {
+            whatsappShareBtn.classList.remove('disabled');
+            whatsappShareBtn.href = `https://wa.me/?text=${encodeURIComponent(message)}`;
+        } else {
+            whatsappShareBtn.classList.add('disabled');
+            whatsappShareBtn.href = '#';
+        }
+    };
+    
+    addPointBtn.addEventListener('click', () => {
+        if (!state.constantsR1 && !state.constantsR2) { alert('Primero debe calcular las constantes de calibración.'); return; }
+        const input = getEl('dPredict').value.trim();
+        if (!input) return;
+        const values = input.split(',').map(v => v.trim().replace(',', '.')).filter(v => v !== '');
+        values.forEach(value => {
+            const d = parseFloat(value);
+            if (isNaN(d)) return;
+            const l = predictLambda(d);
+            if (isNaN(l) || !isFinite(l)) return;
+            state.predPoints.push({d, l, c: estimateColor(l)});
+        });
+        state.identificationDetails.hasBeenRun = false;
+        identificationResult.innerHTML = "Aún no se ha analizado ninguna muestra. Vuelva a identificar si es necesario.";
+        updateWhatsAppButton(false);
+        renderMainUI();
+        getEl('dPredict').value = ''; getEl('dPredict').focus();
+    });
+
+    clearPredictionsBtn.addEventListener('click', () => {
+        state.predPoints = [];
+        state.identificationDetails.hasBeenRun = false;
+        identificationResult.innerHTML = "Aún no se ha analizado ninguna muestra."; 
+        updateWhatsAppButton(false);
+        renderMainUI(); 
+    });
+
+    loadHgCalBtn.addEventListener('click', () => {
+        state.calPointsR1 = [ { l: 404.656, d: 1.65 }, { l: 496.03, d: 5.4105 }, { l: 576.96, d: 8.4825 } ].sort((a,b) => a.d - b.d);
+        state.calPointsR2 = [ { l: 576.96, d: 8.4825 }, { l: 623.40, d: 9.5955 }, { l: 690.70, d: 10.843 } ].sort((a,b) => a.d - b.d);
+        state.predPoints = [];
+        state.identificationDetails.hasBeenRun = false;
+        identificationResult.innerHTML = "Aún no se ha analizado ninguna muestra.";
+        updateWhatsAppButton(false);
+        calculateBtn.click();
+        renderMainUI(); 
+        alert("Calibración de Mercurio cargada y constantes calculadas.");
+    });
+
+    identifyBtn.addEventListener('click', () => {
+        if (state.predPoints.length === 0) { alert("Añada puntos de predicción primero."); return; }
+        let bestMatch = { name: "Desconocido", score: Infinity };
+        for (const [name, spectrum] of Object.entries(knownSpectra)) {
+            if (!spectrum || spectrum.length === 0) continue;
+            let totalError = 0, matchedPointsCount = 0;
+            state.predPoints.forEach(unknown => {
+                let minError = Math.min(...spectrum.map(known => Math.abs(unknown.l - known.w)));
+                if (isFinite(minError)) { totalError += minError; matchedPointsCount++; }
+            });
+            const avgError = matchedPointsCount > 0 ? totalError / matchedPointsCount : Infinity;
+            if (avgError < bestMatch.score) bestMatch = { name, score: avgError };
+        }
+        identificationResult.innerHTML = `Elemento más probable: <span>${bestMatch.name}</span><br>(Error prom: ${isFinite(bestMatch.score) ? bestMatch.score.toFixed(2) : 'N/A'} nm)`;
+        state.theoreticalElement = bestMatch.name;
+        theoreticalElementSelect.value = bestMatch.name;
+        state.identificationDetails = { element: bestMatch.name, averageError: bestMatch.score, hasBeenRun: true };
+        
+        const message = `*Resultados de Análisis Espectral:*\n- Elemento más probable: *${bestMatch.name}*\n- Error promedio: *${isFinite(bestMatch.score) ? bestMatch.score.toFixed(2) : 'N/A'} nm*`;
+        updateWhatsAppButton(true, message);
+        renderIdentificationUI();
+    });
+
+    theoreticalElementSelect.addEventListener('change', (e) => { state.theoreticalElement = e.target.value; renderIdentificationUI(); });
+    emissionBtn.addEventListener('click', () => { state.identificationMode = 'emission'; renderIdentificationUI(); });
+    absorptionBtn.addEventListener('click', () => { state.identificationMode = 'absorption'; renderIdentificationUI(); });
+
+    [measuredSpectrumContainer, theoreticalSpectrumContainer].forEach(container => {
+        const minW = 380, maxW = 750, range = maxW - minW;
+        container.addEventListener('mousemove', (e) => {
+            const marker = container.querySelector('.reference-marker'), indicator = container.querySelector('.wavelength-indicator');
+            if (!marker || !indicator) return;
+            const rect = container.getBoundingClientRect(), x = e.clientX - rect.left, percentage = x / rect.width;
+            const wavelength = minW + (percentage * range); 
+            marker.style.display = indicator.style.display = 'block';
+            marker.style.left = indicator.style.left = `${percentage * 100}%`; 
+            indicator.textContent = `λ ${wavelength.toFixed(1)} nm`;
+            indicator.style.transform = (percentage * 100) > 85 ? 'translateX(-100%) translateX(-5px)' : 'translateX(5px)';
+        });
+        container.addEventListener('mouseleave', (e) => { e.currentTarget.querySelector('.reference-marker').style.display = 'none'; e.currentTarget.querySelector('.wavelength-indicator').style.display = 'none';});
+    });
+
+    const handleChat = async () => {
+        const userText = chatInput.value.trim(), apiKey = apiKeyInput.value.trim();
+        if (!userText || !apiKey) { alert("Por favor, ingresa tu API Key y una pregunta."); return; }
+        addMessageToChat('user', userText); chatInput.value = '';
+        const typingMessage = addMessageToChat('bot', '...', true);
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+        const fullHtmlContent = document.documentElement.outerHTML;
+        const prompt = `Eres un asistente de IA especializado en analizar código HTML, CSS y JavaScript. Basa TODAS tus respuestas exclusivamente en el código que te proporciono.\n\nCÓDIGO:\n\`\`\`html\n${fullHtmlContent}\n\`\`\`\n\nPregunta: "${userText}"`;
+        try {
+            const response = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) });
+            const data = await response.json();
+            typingMessage.remove();
+            if (response.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
+                addMessageToChat('bot', data.candidates[0].content.parts[0].text);
+            } else { addMessageToChat('bot', `Error de la IA: ${data.error?.message || "No se pudo obtener respuesta."}`); }
+        } catch (error) { typingMessage.remove(); addMessageToChat('bot', `Error de red: ${error.message}`); }
+    };
+    const addMessageToChat = (sender, text, isTyping = false) => {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `chat-message ${sender}-message`;
+        if (isTyping) { messageDiv.classList.add('typing'); messageDiv.textContent = "Escribiendo..."; }
+        else { messageDiv.textContent = text; }
+        chatWindow.appendChild(messageDiv); chatWindow.scrollTop = chatWindow.scrollHeight;
+        return messageDiv;
+    };
+    sendChatBtn.addEventListener('click', handleChat);
+    chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); handleChat(); } });
+
+    const performCsvExport = () => {
+        let csv = "PARAMETROS DE HARTMANN (λ = λ₀ + C / (d - d₀))\r\n";
+        if (state.constantsR1) csv += `REGION 1;lambda0;${state.constantsR1.l0.toFixed(6)};C;${state.constantsR1.c.toExponential(6)};d0;${state.constantsR1.d0.toFixed(6)}\r\n`;
+        if (state.constantsR2) csv += `REGION 2;lambda0;${state.constantsR2.l0.toFixed(6)};C;${state.constantsR2.c.toExponential(6)};d0;${state.constantsR2.d0.toFixed(6)}\r\n`;
+        csv += "\r\nPUNTOS DE CALIBRACION\r\nRegion;Lambda (nm);d (cm)\r\n";
+        state.calPointsR1.forEach(p => { csv += `1;${p.l.toFixed(3)};${p.d.toFixed(4)}\r\n` });
+        state.calPointsR2.forEach(p => { csv += `2;${p.l.toFixed(3)};${p.d.toFixed(4)}\r\n` });
+        csv += "\r\nPREDICCIONES\r\nN;d (cm);lambda (nm);Color\r\n";
+        state.predPoints.forEach((p,i) => { csv += `${i+1};${p.d.toFixed(4)};${p.l.toFixed(2)};${p.c.n}\r\n` });
+        if (state.identificationDetails.hasBeenRun) csv +=`\r\nIDENTIFICACION\r\nElemento;${state.identificationDetails.element}\r\nError Promedio (nm);${isFinite(state.identificationDetails.averageError) ? state.identificationDetails.averageError.toFixed(3) : 'N/A'}\r\n`;
+        const link = document.createElement("a");
+        link.href = 'data:text/csv;charset=utf-8,' + encodeURI(csv);
+        link.download = "analisis_hartmann.csv"; link.click();
+    };
+    exportCsvBtn.addEventListener('click', performCsvExport);
+
+    const generatePdfReport = () => {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'pt', 'a4');
+        let yPos = 40; const pageMargin = 40, contentWidth = doc.internal.pageSize.getWidth() - 2 * pageMargin;
+        doc.setFontSize(20).setFont('helvetica', 'bold').text('Informe de Análisis Espectroscópico', doc.internal.pageSize.getWidth() / 2, yPos, { align: 'center' });
+        yPos += 40; doc.setFontSize(16).setFont('helvetica', 'bold').text('1. Constantes de Calibración', pageMargin, yPos); yPos += 20;
+        if (state.constantsR1) {
+            doc.setFontSize(11).text('Región 1:', pageMargin, yPos); yPos += 15;
+            doc.text([` • λ₀ = ${state.constantsR1.l0.toFixed(4)} nm`, ` • C = ${state.constantsR1.c.toExponential(4)} nm·cm`, ` • d₀ = ${state.constantsR1.d0.toFixed(4)} cm`], pageMargin + 15, yPos); yPos += 50;
+        }
+        if (state.constantsR2) { /* ... similar para region 2 ... */ }
+        doc.setFontSize(16).setFont('helvetica', 'bold').text('2. Gráfico de Hartmann', pageMargin, yPos); yPos += 20;
+        html2canvas(hartmannChartCanvas, { scale: 2, backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg-secondary') }).then(canvas => {
+            const imgData = canvas.toDataURL('image/png');
+            const pdfImgWidth = contentWidth, pdfImgHeight = (canvas.height * pdfImgWidth) / canvas.width;
+            if (yPos + pdfImgHeight > doc.internal.pageSize.getHeight() - pageMargin) { doc.addPage(); yPos = pageMargin; }
+            doc.addImage(imgData, 'PNG', pageMargin, yPos, pdfImgWidth, pdfImgHeight); yPos += pdfImgHeight + 20;
+            if (state.predPoints.length > 0) {
+                doc.autoTable({ startY: yPos, head: [['N°', 'd (cm)', 'λ Calc. (nm)', 'Color Est.']], body: state.predPoints.map((p,i)=>[i+1, p.d.toFixed(4), p.l.toFixed(2), p.c.n]), theme: 'grid' });
+                yPos = doc.lastAutoTable.finalY + 20;
+            }
+            if (state.identificationDetails.hasBeenRun) { /* ... add identification details ... */ }
+            doc.save('informe_analisis_hartmann.pdf');
+        });
+    };
+    generatePdfBtn.addEventListener('click', generatePdfReport);
+
+    downloadChartImgBtn.addEventListener('click', () => {
+        if (!state.chart || !state.chart.canvas) return;
+        const imageURL = state.chart.toBase64Image('image/png', 1.0);
+        const link = document.createElement('a');
+        link.href = imageURL;
+        link.download = 'grafico_hartmann.png';
+        link.click();
+    });
+
+    const themeToggle = getEl('theme-toggle'), docElement = document.documentElement;
+    function applyTheme(theme) {
+        docElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+        themeToggle.innerHTML = theme === 'dark' ? '☀️' : '🌙';
+        updateChart(); // Actualiza el gráfico al cambiar de tema
+    }
+    const storedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    applyTheme(storedTheme);
+    themeToggle.addEventListener('click', () => {
+        let newTheme = docElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+        applyTheme(newTheme);
+    });
+
+    // Modal Logic
+    function toggleModal(modalId, show) {
+        const modal = getEl(modalId);
+        if(modal) modal.style.display = show ? 'flex' : 'none';
+    }
+    guideBtnEl.addEventListener('click', () => toggleModal('guideModal', true));
+    theoryBtnEl.addEventListener('click', () => {
+        toggleModal('guideModal', false);
+        toggleModal('theoryModal', true);
+    });
+    modals.forEach(modal => {
+        modal.querySelector('.close-button').addEventListener('click', () => toggleModal(modal.id, false));
+        modal.addEventListener('click', e => { if (e.target === modal) toggleModal(modal.id, false); });
+    });
+    
+    init();
+});
+</script>
+
+</body>
+</html>

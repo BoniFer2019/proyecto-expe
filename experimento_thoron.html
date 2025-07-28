@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Experimento de Radiación de Thoron v4.3 - Laboratorio Virtual</title>
+    <!-- Librerías -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script>
+        MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }, svg: { fontCache: 'global' } };
+    </script>
+    <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+    <style>
+        :root {
+            --bg-primary: #1a1a1a; --bg-secondary: #2c2c2c; --bg-header: #222;
+            --text-primary: #f0f0f0; --text-secondary: #b3b3b3; --border-color: #444;
+            --accent-color: #4da6ff; --accent-hover: #3d8bdb; --green: #2ecc71;
+            --red: #e74c3c; --blue: #3498db; --purple: #9b59b6; --orange: #f39c12;
+            --whatsapp-color: #25D366; --whatsapp-hover: #1EBE57;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.3); --shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.5);
+            --chart-grid-color: rgba(255, 255, 255, 0.1); --chart-text-color: var(--text-secondary);
+        }
+        [data-theme="light"] {
+            --bg-primary: #f4f4f9; --bg-secondary: #ffffff; --bg-header: #ffffff;
+            --text-primary: #1a1a1a; --text-secondary: #555555; --border-color: #dddddd;
+            --accent-color: #007bff; --accent-hover: #0056b3; --green: #28a745;
+            --red: #dc3545; --blue: #007bff; --purple: #6f42c1; --orange: #fd7e14;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.08); --shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.12);
+            --chart-grid-color: rgba(0, 0, 0, 0.08); --chart-text-color: var(--text-secondary);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Roboto', sans-serif; background-color: var(--bg-primary);
+            color: var(--text-primary); line-height: 1.6; transition: background-color 0.3s, color 0.3s;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            background-color: var(--bg-header); color: var(--text-primary);
+            padding: 1rem 3%; border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); gap: 15px;
+        }
+        .back-link {
+            color: var(--text-secondary); text-decoration: none; font-size: 1rem;
+            display: flex; align-items: center; gap: 8px; transition: color 0.3s ease; white-space: nowrap;
+        }
+        .back-link:hover { color: var(--accent-color); }
+        .back-link i { font-size: 1.2rem; }
+        .header-title { text-align: center; flex-grow: 1; }
+        header h1 { font-size: 1.8rem; margin: 0; font-weight: 700; }
+        header p { color: var(--text-secondary); margin-top: 2px; font-size: 0.9rem; }
+        #theme-toggle {
+            background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color);
+            border-radius: 50%; width: 45px; height: 45px; cursor: pointer; font-size: 1.3rem;
+            display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; flex-shrink: 0;
+        }
+        #theme-toggle:hover { transform: scale(1.1) rotate(15deg); }
+        .card { background-color: var(--bg-secondary); border-radius: 12px; padding: 25px; margin-top: 25px; box-shadow: var(--shadow); }
+        .card h3 { font-size: 1.3rem; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; color: var(--accent-color); }
+        .tabs { display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 20px; }
+        .tab-button {
+            padding: 12px 25px; cursor: pointer; border: none; background-color: transparent;
+            font-size: 1.1rem; font-weight: 500; color: var(--text-secondary);
+            border-bottom: 4px solid transparent; transition: all 0.3s ease;
+        }
+        .tab-button.active { color: var(--accent-color); border-bottom-color: var(--accent-color); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        #time-label {
+            font-family: 'Courier New', Courier, monospace; font-size: 4rem; font-weight: bold;
+            color: #fff; background-color: #1e272e; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 20px;
+        }
+        .status-box { background-color: var(--bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+        #status-label, #last-partial-label, #partial-count-label { font-size: 1rem; margin: 4px 0; }
+        #status-label { font-weight: bold; }
+        
+        .button-grid, .params-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; }
+        .btn {
+            padding: 15px; font-size: 1rem; font-weight: 500; border-radius: 8px; border: none;
+            color: white; cursor: pointer; transition: all 0.2s ease;
+            display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: var(--shadow);
+        }
+        .btn:hover { opacity: 0.95; transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+        .btn-start { background-color: var(--green); } .btn-stop { background-color: var(--red); }
+        .btn-mark { background-color: var(--blue); } .btn-clear { background-color: #7f8c8d; }
+        .btn-export { background-color: var(--purple); } 
+        .btn-share-whatsapp { background-color: var(--whatsapp-color); }
+        .btn-share-whatsapp:hover { background-color: var(--whatsapp-hover); }
+        .params-grid input {
+            width: 100%; padding: 12px; font-size: 1rem; background-color: var(--bg-primary);
+            border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary);
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .params-grid label { display: flex; flex-direction: column; gap: 8px; color: var(--text-secondary); }
+
+        .results-table-container { max-height: 350px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; }
+        .results-table { width: 100%; border-collapse: collapse; }
+        .results-table th, .results-table td { padding: 12px; text-align: center; border-bottom: 1px solid var(--border-color); }
+        .results-table th { background-color: #343a40; color: #f8f9fa; position: sticky; top: 0; z-index: 1; }
+        
+        .stats-container { display: grid; grid-template-columns: 1fr; gap: 30px; }
+        .chart-container { position: relative; width: 100%; max-width: 800px; margin-left: auto; margin-right: auto; aspect-ratio: 4 / 3; }
+        #stats-placeholder { text-align: center; color: var(--text-secondary); font-size: 1.2rem; padding: 50px 20px; border: 2px dashed var(--border-color); border-radius: 8px; }
+        #stats-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 1rem; }
+        #stats-table th, #stats-table td { border: 1px solid var(--border-color); padding: 10px 15px; text-align: center; }
+        #stats-table td:first-child { text-align: left; font-weight: bold; }
+
+        .calc-form { display: grid; grid-template-columns: 1fr; gap: 15px; max-width: 400px; margin: 0 auto 20px auto; }
+        .calc-form input { padding: 10px; border: 1px solid var(--border-color); background-color: var(--bg-primary); color: var(--text-primary); border-radius: 8px; width: 100%; font-size: 1rem; }
+        .main-footer { text-align: center; padding: 2rem 1rem; margin-top: 40px; border-top: 1px solid var(--border-color); color: var(--text-secondary); font-size: 0.9rem; }
+        @media (max-width: 768px) { .back-link span { display: none; } }
+    </style>
+</head>
+<body>
+
+<header>
+    <a href="index.html#experimentos" class="back-link" title="Volver a la página de experimentos"><i class="fas fa-arrow-left"></i><span>Volver a Experimentos</span></a>
+    <div class="header-title">
+        <h1>Radiación de Thoron</h1>
+        <p>Análisis de Decaimiento Radiactivo | FaCENA – UNNE</p>
+    </div>
+    <button id="theme-toggle" title="Cambiar tema">☀️</button>
+</header>
+
+<div class="container">
+    <div class="tabs">
+        <button class="tab-button active" data-tab="crono">Cronómetro</button>
+        <button class="tab-button" data-tab="stats">Análisis y Gráfico</button>
+        <button class="tab-button" data-tab="calc">Cálculo de Vida Media</button>
+    </div>
+
+    <!-- PESTAÑA 1 -->
+    <div class="tab-content active" id="crono">
+        <div class="card">
+            <div id="time-label">00:00:00,00</div>
+            <div class="status-box">
+                <p id="status-label">Listo para iniciar</p>
+                <p id="last-partial-label">Último Parcial: --:--:--</p>
+                <p id="partial-count-label">Pares Marcados: 0</p>
+            </div>
+            <div class="button-grid">
+                <button class="btn btn-start" id="start-stop-btn"><i class="fas fa-play"></i> Iniciar (Espacio)</button>
+                <button class="btn btn-mark" id="mark-time-btn"><i class="fas fa-check"></i> Marcar Parcial (M)</button>
+                <button class="btn btn-clear" id="clear-data-btn"><i class="fas fa-trash"></i> Limpiar Datos</button>
+            </div>
+        </div>
+
+        <!-- ===== NUEVA SECCIÓN AQUÍ ===== -->
+        <div class="card">
+            <h3><i class="fa-solid fa-clipboard-check"></i> Condiciones del Experimento</h3>
+            <div class="params-grid">
+                <div>
+                    <label for="param-temp">Temperatura (°C)</label>
+                    <input type="number" id="param-temp" placeholder="Ej: 25">
+                </div>
+                <div>
+                    <label for="param-humidity">Humedad (%)</label>
+                    <input type="number" id="param-humidity" placeholder="Ej: 50">
+                </div>
+                <div>
+                    <label for="param-voltage">Voltaje (V)</label>
+                    <input type="number" id="param-voltage" placeholder="Ej: 500">
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3><i class="fas fa-table-list"></i> Datos Recolectados</h3>
+            <div class="results-table-container">
+                <table class="results-table">
+                    <thead><tr><th>N°</th><th>T1 (s)</th><th>T2 (s)</th><th>t (s)</th><th>s (s)</th><th>log(1/s)</th></tr></thead>
+                    <tbody id="results-tbody"></tbody>
+                </table>
+            </div>
+            <div style="margin-top: 20px; text-align: center;">
+                <button class="btn btn-export" id="transfer-btn"><i class="fas fa-flask-vial"></i> Transferir Pendiente a Cálculo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PESTAÑA 2 -->
+    <div class="tab-content" id="stats">
+        <div class="card" id="stats-card">
+            <div id="stats-placeholder">Realiza al menos tres mediciones para generar el análisis.</div>
+            <div id="stats-content" style="display:none;">
+                <div class="stats-container">
+                    <div class="chart-container"><canvas id="analysis-chart"></canvas></div>
+                    <div style="overflow-x:auto;"><table id="stats-table"></table></div>
+                </div>
+            </div>
+             <div class="button-grid" style="margin-top: 25px;">
+                <button class="btn btn-export" id="save-pdf-btn"><i class="fas fa-file-pdf"></i> Guardar PDF</button>
+                <button class="btn btn-share-whatsapp" id="share-pdf-btn"><i class="fab fa-whatsapp"></i> Compartir PDF</button>
+                <button class="btn btn-export" id="save-png-btn"><i class="fas fa-file-image"></i> Guardar PNG</button>
+                <button class="btn btn-share-whatsapp" id="share-png-btn"><i class="fab fa-whatsapp"></i> Compartir PNG</button>
+                <button class="btn btn-export" id="save-excel-btn" style="background-color: var(--green);"><i class="fas fa-file-excel"></i> Guardar Excel</button>
+                <button class="btn btn-share-whatsapp" id="share-excel-btn"><i class="fab fa-whatsapp"></i> Compartir Excel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PESTAÑA 3 -->
+    <div class="tab-content" id="calc">
+        <div class="card">
+            <h3><i class="fas fa-calculator"></i> Cálculo de Vida Media (τ)</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 1rem; text-align:center;">La vida media se calcula con la fórmula: $\tau = -1 / (m \cdot \ln(10))$, donde 'm' es la pendiente del ajuste lineal.</p>
+            <div class="calc-form">
+                <label for="slope-input">Pendiente (m):</label>
+                <input type="number" id="slope-input" placeholder="Transferir o ingresar valor">
+            </div>
+            <div class="button-grid" style="margin-top: 20px; max-width: 400px; margin-left: auto; margin-right: auto;">
+                <button class="btn btn-mark" id="add-tau-btn"><i class="fas fa-check"></i> Calcular y Agregar</button>
+                <button class="btn btn-clear" id="clear-tau-btn"><i class="fas fa-trash"></i> Limpiar Tabla</button>
+            </div>
+        </div>
+        <div class="card">
+             <h3><i class="fas fa-history"></i> Historial de Cálculos</h3>
+             <div class="results-table-container" style="max-height: 250px;">
+                <table class="results-table">
+                    <thead><tr><th>Serie</th><th>Pendiente (m)</th><th>Vida Media τ (s)</th></tr></thead>
+                    <tbody id="tau-table-body"></tbody>
+                </table>
+             </div>
+             <div class="button-grid" style="margin-top: 20px;">
+                 <button class="btn btn-export" id="download-tau-excel-btn" style="background-color: var(--green);"><i class="fas fa-file-excel"></i> Descargar Excel</button>
+                 <button class="btn btn-share-whatsapp" id="share-tau-excel-btn"><i class="fab fa-whatsapp"></i> Compartir Excel</button>
+             </div>
+        </div>
+    </div>
+</div>
+
+<footer class="main-footer">
+    <p>© 2025 Complemento de Laboratorio. Derechos reservados por Bonifacio Fernández.</p>
+</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const dom = {
+        timeLabel: document.getElementById('time-label'), statusLabel: document.getElementById('status-label'),
+        lastPartialLabel: document.getElementById('last-partial-label'), partialCountLabel: document.getElementById('partial-count-label'),
+        resultsTbody: document.getElementById('results-tbody'), startStopBtn: document.getElementById('start-stop-btn'),
+        markTimeBtn: document.getElementById('mark-time-btn'), clearDataBtn: document.getElementById('clear-data-btn'),
+        themeToggle: document.getElementById('theme-toggle'), transferBtn: document.getElementById('transfer-btn'),
+        statsPlaceholder: document.getElementById('stats-placeholder'), statsContent: document.getElementById('stats-content'),
+        statsTable: document.getElementById('stats-table'), analysisChartCanvas: document.getElementById('analysis-chart'),
+        slopeInput: document.getElementById('slope-input'), addTauBtn: document.getElementById('add-tau-btn'),
+        clearTauBtn: document.getElementById('clear-tau-btn'), tauTableBody: document.getElementById('tau-table-body'),
+        savePdfBtn: document.getElementById('save-pdf-btn'), sharePdfBtn: document.getElementById('share-pdf-btn'),
+        savePngBtn: document.getElementById('save-png-btn'), sharePngBtn: document.getElementById('share-png-btn'),
+        saveExcelBtn: document.getElementById('save-excel-btn'), shareExcelBtn: document.getElementById('share-excel-btn'),
+        downloadTauExcelBtn: document.getElementById('download-tau-excel-btn'), shareTauExcelBtn: document.getElementById('share-tau-excel-btn'),
+        paramTemp: document.getElementById('param-temp'), paramHumidity: document.getElementById('param-humidity'), paramVoltage: document.getElementById('param-voltage'),
+    };
+
+    let running = false, timerInterval = null, startTime = 0, elapsedTime = 0;
+    let partialTimestamps = [], processedPairs = [], tauSeries = [];
+    let chart = null, regressionResults = null;
+    let temporaryFileLinks = {}; 
+
+    const formatTime = (ms, includeCentiseconds = true) => {
+        const h = Math.floor(ms / 3600000).toString().padStart(2, '0');
+        const m = Math.floor((ms % 3600000) / 60000).toString().padStart(2, '0');
+        const s = Math.floor((ms % 60000) / 1000).toString().padStart(2, '0');
+        if (!includeCentiseconds) return `${h}:${m}:${s}`;
+        const cs = Math.floor((ms % 1000) / 10).toString().padStart(2, '0');
+        return `${h}:${m}:${s},${cs}`;
+    };
+    
+    const updateDisplay = () => { if (running) elapsedTime = Date.now() - startTime; dom.timeLabel.textContent = formatTime(elapsedTime); };
+
+    const toggleStartStop = () => {
+        running = !running;
+        if (running) {
+            startTime = elapsedTime > 0 ? Date.now() - elapsedTime : Date.now();
+            timerInterval = setInterval(updateDisplay, 41);
+            dom.startStopBtn.innerHTML = '<i class="fas fa-pause"></i> Parar (Espacio)';
+            dom.startStopBtn.className = 'btn btn-stop';
+        } else {
+            clearInterval(timerInterval);
+            dom.startStopBtn.innerHTML = '<i class="fas fa-play"></i> Reanudar (Espacio)';
+            dom.startStopBtn.className = 'btn btn-start';
+        }
+        dom.statusLabel.textContent = running ? 'Corriendo...' : 'Detenido';
+    };
+
+    const markPartialTime = () => {
+        if (!running) { alert("Inicia el cronómetro para marcar tiempos."); return; }
+        const partialTime = Date.now() - startTime;
+        partialTimestamps.push(partialTime / 1000);
+        dom.lastPartialLabel.textContent = `Último Parcial: ${formatTime(partialTime, false)}`;
+        if (partialTimestamps.length % 2 === 0) {
+            const t2 = partialTimestamps[partialTimestamps.length - 1], t1 = partialTimestamps[partialTimestamps.length - 2];
+            const s_duration = t2 - t1;
+            if (s_duration > 1e-9) {
+                const pair = { n: processedPairs.length + 1, t1, t2, t_prom: (t1 + t2) / 2.0, s_duration, log_s: Math.log10(1.0 / s_duration) };
+                processedPairs.push(pair);
+                const row = dom.resultsTbody.insertRow();
+                row.innerHTML = `<td>${pair.n}</td><td>${pair.t1.toFixed(3)}</td><td>${pair.t2.toFixed(3)}</td><td>${pair.t_prom.toFixed(3)}</td><td>${pair.s_duration.toFixed(4)}</td><td>${pair.log_s.toFixed(4)}</td>`;
+            }
+            dom.partialCountLabel.textContent = `Pares Marcados: ${processedPairs.length}`;
+        }
+    };
+
+    const clearData = () => {
+        if (!confirm("¿Borrar todos los datos y parciales del cronómetro y estadísticas? La tabla de cálculo de Vida Media no se verá afectada.")) return;
+        running = false; clearInterval(timerInterval);
+        startTime = 0; elapsedTime = 0; partialTimestamps = []; processedPairs = []; regressionResults = null;
+        Object.values(temporaryFileLinks).forEach(url => URL.revokeObjectURL(url));
+        temporaryFileLinks = {};
+        dom.timeLabel.textContent = formatTime(0); dom.statusLabel.textContent = 'Listo para iniciar';
+        dom.lastPartialLabel.textContent = 'Último Parcial: --:--:--'; dom.partialCountLabel.textContent = 'Pares Marcados: 0';
+        dom.resultsTbody.innerHTML = '';
+        updateStatistics();
+    };
+    
+    const showTab = (tabName) => {
+        document.querySelectorAll('.tab-content, .tab-button').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabName).classList.add('active');
+        document.querySelector(`.tab-button[data-tab='${tabName}']`).classList.add('active');
+        if (tabName === 'stats') updateStatistics();
+    };
+    
+    const linearRegressionWithErrors = (x, y) => {
+        const n = x.length; if (n < 3) return null;
+        const sum_x = x.reduce((a, b) => a + b, 0), sum_y = y.reduce((a, b) => a + b, 0);
+        const sum_xx = x.map(xi => xi * xi).reduce((a, b) => a + b, 0), sum_xy = x.map((xi, i) => xi * y[i]).reduce((a, b) => a + b, 0);
+        const x_mean = sum_x / n, denominator = n * sum_xx - sum_x * sum_x;
+        if (Math.abs(denominator) < 1e-9) return null;
+        const slope = (n * sum_xy - sum_x * sum_y) / denominator, intercept = (sum_y - slope * sum_x) / n;
+        const y_predicted = x.map(xi => slope * xi + intercept);
+        const residuals_sq_sum = y.map((yi, i) => (yi - y_predicted[i]) ** 2).reduce((a, b) => a + b, 0);
+        const std_error_of_estimate = Math.sqrt(residuals_sq_sum / (n - 2));
+        const sum_x_dev_sq = x.map(xi => (xi - x_mean) ** 2).reduce((a, b) => a + b, 0);
+        const slopeError = std_error_of_estimate / Math.sqrt(sum_x_dev_sq);
+        const interceptError = std_error_of_estimate * Math.sqrt((1/n) + (x_mean**2 / sum_x_dev_sq));
+        const r2 = 1 - (residuals_sq_sum / y.map(yi => (yi - (sum_y / n))**2).reduce((a,b)=>a+b,0));
+        return { slope, intercept, slopeError, interceptError, r2 };
+    };
+
+    const updateStatistics = () => {
+        if (processedPairs.length < 3) {
+            dom.statsPlaceholder.style.display = 'block'; dom.statsContent.style.display = 'none';
+            if (chart) { chart.destroy(); chart = null; } regressionResults = null;
+            return;
+        }
+        dom.statsPlaceholder.style.display = 'none'; dom.statsContent.style.display = 'block';
+        
+        const t_values = processedPairs.map(p => p.t_prom), log_values = processedPairs.map(p => p.log_s);
+        regressionResults = linearRegressionWithErrors(t_values, log_values);
+        if (!regressionResults) return;
+        const { slope, intercept, slopeError } = regressionResults;
+        
+        const styles = getComputedStyle(document.body), textColor = styles.getPropertyValue('--text-primary').trim(), gridColor = styles.getPropertyValue('--chart-grid-color').trim();
+        const minT = Math.min(...t_values), maxT = Math.max(...t_values);
+        
+        if (chart) chart.destroy();
+        chart = new Chart(dom.analysisChartCanvas, {
+            data: { datasets: [
+                { label: 'Datos (t, log(1/s))', type: 'scatter', data: processedPairs.map(p => ({ x: p.t_prom, y: p.log_s })), backgroundColor: 'rgba(52, 152, 219, 0.7)'},
+                { label: `Ajuste Lineal`, type: 'line', data: [{ x: minT, y: slope * minT + intercept }, { x: maxT, y: slope * maxT + intercept }], borderColor: 'rgba(231, 76, 60, 1)', borderWidth: 2, fill: false, pointRadius: 0 }
+            ]},
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { title: { display: true, text: `Análisis (m=${slope.toFixed(4)} ± ${slopeError.toFixed(4)})`, color: textColor, font: {size: 16} }, legend: { labels: { color: textColor } } },
+                scales: { x: { title: { display: true, text: 'Tiempo Promedio t (s)', color: textColor }, grid: { color: gridColor }, ticks: { color: textColor } },
+                          y: { title: { display: true, text: 'log(1/s)', color: textColor }, grid: { color: gridColor }, ticks: { color: textColor } } }
+            }
+        });
+        const { interceptError, r2 } = regressionResults;
+        dom.statsTable.innerHTML = `<thead><tr><th colspan="2">Resultados del Ajuste Lineal</th></tr></thead><tbody>
+            <tr><td>Pendiente (m)</td><td>${slope.toFixed(5)} ± ${slopeError.toFixed(5)}</td></tr>
+            <tr><td>Ordenada al Origen (b)</td><td>${intercept.toFixed(5)} ± ${interceptError.toFixed(5)}</td></tr>
+            <tr><td>Coef. de Determinación (R²)</td><td>${r2.toFixed(5)}</td></tr>
+            <tr><td>N° de Pares</td><td>${processedPairs.length}</td></tr></tbody>`;
+    };
+
+    const getCanvasBlob = async (canvas) => {
+        const exportCanvas = document.createElement('canvas');
+        exportCanvas.width = canvas.width * 3; exportCanvas.height = canvas.height * 3;
+        const ctx = exportCanvas.getContext('2d');
+        ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--bg-secondary').trim();
+        ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+        ctx.drawImage(canvas, 0, 0, exportCanvas.width, exportCanvas.height);
+        return new Promise(resolve => exportCanvas.toBlob(resolve, 'image/png'));
+    };
+
+    const getExcelBlob = (data, sheetName) => {
+        const temp = dom.paramTemp.value || 'N/A';
+        const humidity = dom.paramHumidity.value || 'N/A';
+        const voltage = dom.paramVoltage.value || 'N/A';
+
+        const header = [
+            { A: "CONDICIONES DEL EXPERIMENTO" },
+            { A: "Temperatura (°C)", B: temp },
+            { A: "Humedad (%)", B: humidity },
+            { A: "Voltaje (V)", B: voltage }
+        ];
+
+        const ws = XLSX.utils.json_to_sheet(header, { skipHeader: true });
+        XLSX.utils.sheet_add_json(ws, data, { origin: 'A6' }); // Deja una fila en blanco
+        
+        const wb = XLSX.utils.book_new(); 
+        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+        return new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    };
+    
+    const downloadBlob = (blob, fileName) => { const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = fileName; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); };
+    const shareToWhatsApp = (message) => { window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank'); };
+    const generateAndStoreLink = (blob, key) => { if (temporaryFileLinks[key]) URL.revokeObjectURL(temporaryFileLinks[key]); temporaryFileLinks[key] = URL.createObjectURL(blob); };
+
+    // --- EVENT LISTENERS ---
+    dom.startStopBtn.addEventListener('click', toggleStartStop);
+    dom.markTimeBtn.addEventListener('click', markPartialTime);
+    dom.clearDataBtn.addEventListener('click', clearData);
+    document.querySelectorAll('.tab-button').forEach(button => button.addEventListener('click', () => showTab(button.dataset.tab)));
+    
+    dom.savePdfBtn.addEventListener('click', async () => { if (!chart) return; const blob = await getCanvasBlob(dom.analysisChartCanvas); const { jsPDF } = window.jspdf; const pdf = new jsPDF({ orientation: 'landscape' }); pdf.text("Análisis de Thoron", 14, 15); pdf.addImage(URL.createObjectURL(blob), 'PNG', 15, 25, 267, 150); downloadBlob(pdf.output('blob'), 'analisis_thoron.pdf'); });
+    dom.savePngBtn.addEventListener('click', async () => { if (!chart) return; const blob = await getCanvasBlob(dom.analysisChartCanvas); downloadBlob(blob, 'analisis_thoron.png'); });
+    dom.saveExcelBtn.addEventListener('click', () => { if (processedPairs.length === 0) return; const blob = getExcelBlob(processedPairs, 'Datos Thoron'); downloadBlob(blob, 'datos_thoron.xlsx'); });
+    dom.sharePdfBtn.addEventListener('click', async () => { if (!chart) return; const canvasBlob = await getCanvasBlob(dom.analysisChartCanvas); const { jsPDF } = window.jspdf; const pdf = new jsPDF({ orientation: 'landscape' }); pdf.text("Análisis de Thoron", 14, 15); pdf.addImage(URL.createObjectURL(canvasBlob), 'PNG', 15, 25, 267, 150); generateAndStoreLink(pdf.output('blob'), 'pdf'); shareToWhatsApp(`Hola, te comparto el informe PDF del experimento de Thoron. Descárgalo aquí: ${temporaryFileLinks['pdf']}`); });
+    dom.sharePngBtn.addEventListener('click', async () => { if (!chart) return; const blob = await getCanvasBlob(dom.analysisChartCanvas); generateAndStoreLink(blob, 'png'); shareToWhatsApp(`Hola, te comparto el gráfico del experimento de Thoron. Descárgalo aquí: ${temporaryFileLinks['png']}`); });
+    dom.shareExcelBtn.addEventListener('click', () => { if (processedPairs.length === 0) return; const blob = getExcelBlob(processedPairs, 'Datos Thoron'); generateAndStoreLink(blob, 'excel'); shareToWhatsApp(`Hola, te comparto los datos en Excel del experimento de Thoron. Descárgalos aquí: ${temporaryFileLinks['excel']}`); });
+    dom.transferBtn.addEventListener('click', () => { if (!regressionResults) { alert("Genera un análisis primero."); return; } dom.slopeInput.value = regressionResults.slope.toFixed(6); showTab('calc'); });
+    dom.addTauBtn.addEventListener('click', () => { const m = parseFloat(dom.slopeInput.value); if (isNaN(m) || m === 0) { alert("Pendiente no válida."); return; } const tau = -1 / (m * Math.log(10)); tauSeries.push({ serie: tauSeries.length + 1, m, tau }); const row = dom.tauTableBody.insertRow(); row.innerHTML = `<td>${tauSeries.length}</td><td>${m.toFixed(5)}</td><td><b>${tau.toFixed(2)} s</b></td>`; dom.slopeInput.value = ''; });
+    dom.clearTauBtn.addEventListener('click', () => { if (tauSeries.length > 0 && confirm("¿Borrar historial?")) { tauSeries = []; dom.tauTableBody.innerHTML = ''; } });
+    dom.downloadTauExcelBtn.addEventListener('click', () => { if (tauSeries.length === 0) return; const blob = getExcelBlob(tauSeries, 'Vida Media'); downloadBlob(blob, 'historial_vida_media.xlsx'); });
+    dom.shareTauExcelBtn.addEventListener('click', () => { if (tauSeries.length === 0) return; const blob = getExcelBlob(tauSeries, 'Vida Media'); generateAndStoreLink(blob, 'tau_excel'); shareToWhatsApp(`Hola, te comparto el historial de cálculos de vida media. Descárgalo aquí: ${temporaryFileLinks['tau_excel']}`); });
+    dom.themeToggle.addEventListener('click', () => { const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', newTheme); localStorage.setItem('theme', newTheme); dom.themeToggle.innerHTML = newTheme === 'dark' ? '☀️' : '🌙'; if (processedPairs.length > 2) updateStatistics(); });
+    document.addEventListener('keydown', (e) => { if (e.target.tagName === 'INPUT') return; if (e.code === 'Space') { e.preventDefault(); toggleStartStop(); } else if (e.key.toLowerCase() === 'm') { e.preventDefault(); markPartialTime(); } });
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    dom.themeToggle.innerHTML = savedTheme === 'dark' ? '☀️' : '🌙';
+    showTab('crono');
+});
+</script>
+
+</body>
+</html>

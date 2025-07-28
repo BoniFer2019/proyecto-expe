@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html data-theme="dark" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis Espectral con Goniómetro y Red de Difracción</title>
+    
+    <!-- Google Fonts y Font Awesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Librerías para Gráficos y PDF -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        :root {
+            --bg-primary: #1a1a1a; --bg-secondary: #2c2c2c; --bg-header: #222;
+            --text-primary: #f0f0f0; --text-secondary: #b3b3b3; --border-color: #444;
+            --accent-color: #8a77ff; --accent-hover: #9d8cff; --green: #2ecc71;
+            --red: #e74c3c; --blue: #3498db; --purple: #9b59b6; --orange: #f39c12;
+            --whatsapp-color: #25D366; --whatsapp-hover: #1EBE56;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.3); --shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.5);
+            --chart-grid-color: rgba(255, 255, 255, 0.1); --chart-text-color: var(--text-secondary);
+            --plot-bg: var(--bg-secondary);
+        }
+        [data-theme="light"] {
+            --bg-primary: #f4f4f9; --bg-secondary: #ffffff; --bg-header: #ffffff;
+            --text-primary: #1a1a1a; --text-secondary: #555555; --border-color: #dddddd;
+            --accent-color: #7965f0; --accent-hover: #5d4cdb; --green: #28a745;
+            --red: #dc3545; --blue: #007bff; --purple: #6f42c1; --orange: #fd7e14;
+            --whatsapp-color: #25D366; --whatsapp-hover: #20b859;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.08); --shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.12);
+            --chart-grid-color: rgba(0, 0, 0, 0.08); --chart-text-color: var(--text-secondary);
+            --plot-bg: #ffffff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Roboto', sans-serif; background-color: var(--bg-primary);
+            color: var(--text-primary); line-height: 1.6; padding: 20px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
+        .main-app-container {
+            width: 100%; max-width: 1500px; margin: 0 auto;
+            background-color: var(--bg-secondary); padding: 20px;
+            border-radius: 15px; box-shadow: var(--shadow);
+        }
+
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            background-color: var(--bg-secondary); color: var(--text-primary);
+            padding: 1rem 1.5rem; margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            gap: 15px;
+        }
+        .back-link {
+            color: var(--text-secondary); text-decoration: none; font-size: 1rem;
+            display: flex; align-items: center; gap: 8px; transition: color 0.3s ease;
+            white-space: nowrap;
+        }
+        .back-link:hover { color: var(--accent-color); }
+        .back-link i { font-size: 1.2rem; }
+        .header-title { text-align: center; flex-grow: 1; }
+        header h1 { font-size: 1.8rem; margin: 0; font-weight: 700; color: var(--text-primary); }
+        header p { color: var(--text-secondary); margin-top: 2px; font-size: 0.9rem; }
+        #theme-toggle {
+            background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-color);
+            border-radius: 50%; width: 45px; height: 45px; cursor: pointer; font-size: 1.3rem;
+            display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+        #theme-toggle:hover { transform: scale(1.1) rotate(15deg); }
+
+        .tabs { display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 25px; }
+        .tab-button {
+            padding: 12px 25px; cursor: pointer; border: none; background-color: transparent;
+            font-size: 1.1rem; font-weight: 500; color: var(--text-secondary);
+            border-bottom: 4px solid transparent; transition: all 0.3s ease;
+        }
+        .tab-button.active { color: var(--accent-color); border-bottom-color: var(--accent-color); }
+        .tab-pane, .tab-content { display: none; }
+        .tab-pane.active, .tab-content.active { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .content-grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: 20px; }
+        .controls-panel { display: flex; flex-direction: column; gap: 20px; }
+        .plot-panel { background-color: var(--bg-secondary); border-radius: 10px; padding: 20px; }
+        .card {
+            background-color: var(--bg-primary); border: 1px solid var(--border-color);
+            border-radius: 12px; padding: 25px; box-shadow: var(--shadow); 
+            transition: all 0.3s ease;
+        }
+        .card h3 {
+            font-size: 1.3rem; margin-bottom: 20px; display: flex;
+            align-items: center; gap: 10px; color: var(--accent-color);
+        }
+        
+        .frame { border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; background-color: var(--bg-primary); }
+        .frame-title { font-weight: 600; font-size: 1.2em; margin-bottom: 15px; color: var(--accent-color); }
+        .accordion-toggle { cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .accordion-indicator { font-size: 1.1em; margin-left: 10px; }
+        .accordion-content.collapsed { display: none; }
+
+        label { display: block; margin-bottom: 8px; color: var(--text-secondary); font-size: 0.9rem; }
+        input, .select, select {
+            width: 100%; padding: 12px; font-size: 1rem; background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary);
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        input:focus, .select:focus, select:focus {
+            outline: none; border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 25%, transparent);
+        }
+        .input-group { display: flex; gap: 10px; margin-bottom: 10px; }
+
+        .btn {
+            padding: 12px 15px; font-size: 1rem; font-weight: 500; border-radius: 8px; border: none;
+            color: white; cursor: pointer; transition: all 0.3s ease; display: inline-flex;
+            align-items: center; justify-content: center; gap: 10px;
+            box-shadow: var(--shadow); text-decoration: none; width: 100%;
+        }
+        .btn:hover { opacity: 0.95; transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+        .btn.disabled { opacity: 0.6; cursor: not-allowed; pointer-events: none; }
+        .btn-main { background-color: var(--accent-color); } .btn-main:hover { background-color: var(--accent-hover); }
+        .btn-secondary { background-color: #5a5c7a; } .btn-secondary:hover { background-color: #6c6e8d; }
+        .btn-success { background-color: var(--green); } .btn-success:hover { background-color: #38d97b; }
+        .btn-delete { background-color: var(--red); padding: 4px 8px; font-size: 0.85em; }
+        .btn-whatsapp { background-color: var(--whatsapp-color); } .btn-whatsapp:hover { background-color: var(--whatsapp-hover); }
+
+        #predictionTable, #reference-table, #rawDataTable { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; }
+        #predictionTable th, #predictionTable td, #reference-table th, #reference-table td, #rawDataTable th, #rawDataTable td { padding: 10px; text-align: center; border: 1px solid var(--border-color); }
+        #predictionTable th, #rawDataTable th, #reference-table th { background-color: color-mix(in srgb, var(--border-color) 40%, transparent); color: var(--text-primary); font-weight: 500; }
+        #predictionTable tbody tr:hover, #rawDataTable tbody tr:hover, #reference-table tbody tr:hover { background-color: color-mix(in srgb, var(--accent-color) 10%, transparent); }
+
+        .point-list { list-style-type: none; padding: 10px; font-size: 0.9em; max-height: 120px; overflow-y: auto; background-color: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border-color); }
+        .point-list li { margin-bottom: 5px; padding: 5px; border-radius: 4px; }
+
+        .spectrum-display { height: 70px; border-radius: 5px; margin-bottom: 25px; overflow: visible; position: relative; transition: background 0.3s; cursor: crosshair; }
+        .spectrum-display .line { position: absolute; top: 0; width: 2px; height: 100%; transform: translateX(-50%); }
+        .spectrum-display .wavelength-label { position: absolute; bottom: -20px; transform: translateX(-50%); font-size: 10px; color: var(--text-secondary); }
+        .spectrum-display .reference-marker { position: absolute; top: 0; height: 100%; width: 1px; background-color: var(--red); opacity: 0.8; display: none; pointer-events: none; }
+        .spectrum-display .wavelength-indicator { position: absolute; top: 5px; background-color: rgba(0,0,0,0.7); color: white; padding: 2px 5px; border-radius: 3px; font-size: 11px; display: none; z-index: 10; }
+        #identification-result span { font-weight: bold; color: var(--accent-color); }
+        .mode-switch .btn { width: auto; border-radius: 8px; }
+        .mode-switch .btn:not(.active) { background-color: var(--bg-primary); color: var(--text-secondary); }
+
+        .chart-container {
+            padding: 20px; border-radius: 12px;
+            background-color: var(--plot-bg);
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+        }
+        .chart-container h3 { text-align: center; color: var(--chart-text-color); margin: 0 0 5px 0; font-weight: 500; }
+        .chart-container p { text-align: center; color: var(--chart-text-color); font-size: 0.9em; margin-bottom: 15px; }
+
+        /* Chatbot Styles */
+        .api-warning { color: var(--orange); background-color: color-mix(in srgb, var(--orange) 10%, transparent); padding: 15px; border-radius: 8px; border: 1px solid var(--orange); margin-bottom: 15px; font-size: 0.9em; }
+        .api-warning a { color: var(--accent-hover); font-weight: bold; }
+        #chat-window { height: 400px; overflow-y: auto; padding: 15px; background-color: var(--bg-primary); border-radius: 8px; margin-bottom: 15px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 10px; }
+        .chat-message { padding: 10px 15px; border-radius: 12px; max-width: 85%; line-height: 1.5; }
+        .user-message { background-color: var(--accent-color); color: white; align-self: flex-end; }
+        .bot-message { background-color: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); align-self: flex-start; }
+        #chat-input-container { display: flex; gap: 10px; }
+
+        .main-footer {
+            text-align: center; padding: 2rem 1rem; margin-top: 40px;
+            border-top: 1px solid var(--border-color); color: var(--text-secondary); font-size: 0.9rem;
+        }
+
+        @media (max-width: 1200px) { .content-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) { .back-link span { display: none; } }
+    </style>
+</head>
+<body>
+
+<div class="main-app-container">
+    <header>
+        <a href="index.html#experimentos" class="back-link" title="Volver a la página de experimentos">
+            <i class="fas fa-arrow-left"></i>
+            <span>Volver a Experimentos</span>
+        </a>
+        <div class="header-title">
+            <h1>Análisis Espectral (Goniómetro)</h1>
+            <p>Red de Difracción | FaCENA – UNNE</p>
+        </div>
+        <button id="theme-toggle" title="Cambiar tema">☀️</button>
+    </header>
+
+    <div class="tabs">
+        <button class="tab-button active" data-tab="analysis">1. Calibración y Análisis</button>
+        <button class="tab-button" data-tab="identification">2. Comparación e Identificación</button>
+        <button class="tab-button" data-tab="chatbot">3. Chatbot IA</button>
+    </div>
+
+    <div id="analysis" class="tab-pane active">
+        <div class="content-grid">
+            <div class="controls-panel">
+                <div class="frame">
+                    <h3 class="frame-title accordion-toggle">
+                        0. Toma de Datos (Formato Goniómetro) <span class="accordion-indicator">[–]</span>
+                    </h3>
+                    <div class="accordion-content">
+                        <div class="frame" style="padding:10px; margin-bottom:15px; background-color: var(--bg-secondary);">
+                            <b style="color:var(--text-primary)">Posición del Cero (Orden 0)</b>
+                            <div class="input-group">
+                                <input type="number" id="zero_deg" class="input" placeholder="Grados (°)">
+                                <input type="number" id="zero_min" class="input" placeholder="Minutos (')">
+                            </div>
+                            <button id="setZeroBtn" class="btn btn-secondary" style="width:auto; padding: 8px 12px; font-size: 0.9em; margin-bottom:10px;">Fijar Posición del Cero</button>
+                            <div id="zeroPositionDisplay" style="color:var(--text-secondary); font-size:0.9em;">Posición del Cero: No fijada.</div>
+                        </div>
+                        
+                        <div class="frame" style="padding:10px; margin-bottom:15px; background-color: var(--bg-secondary);">
+                            <b style="color:var(--text-primary)">Medición de Líneas (Orden m≠0)</b>
+                            <div class="input-group">
+                                <input type="number" id="raw_deg" class="input" placeholder="Grados (°)">
+                                <input type="number" id="raw_min" class="input" placeholder="Minutos (')">
+                            </div>
+                            <input type="number" id="raw_order" class="input" placeholder="Orden de Difracción (m)">
+                            <input type="text" id="raw_color" class="input" placeholder="Color Observado (opcional)">
+                            <button id="addRawDataBtn" class="btn btn-success">Añadir Medición a la Lista</button>
+                        </div>
+                        
+                        <table id="rawDataTable">
+                            <thead><tr><th>Medición Cruda</th><th>Orden</th><th>Color</th><th>Ángulo Final (θ)</th><th>Acciones</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="frame">
+                    <h3 class="frame-title accordion-toggle">
+                        1. Calibración de la Red de Difracción <span class="accordion-indicator">[+]</span>
+                    </h3>
+                    <div class="accordion-content collapsed">
+                        <label for="lambda_cal_conocida">λ<sub>cal</sub> Conocida (nm):</label>
+                        <input type="text" id="lambda_cal_conocida" class="input" placeholder="Ej: 589.0">
+                        <label for="angulo_cal_grados">Ángulo Medido para λ<sub>cal</sub> (θ<sub>cal</sub>, grados):</label>
+                        <input type="text" id="angulo_cal_grados" class="input" placeholder="Ej: 15.5 o -15.5">
+                        <label for="orden_cal">Orden de Difracción (m<sub>cal</sub>):</label>
+                        <input type="text" id="orden_cal" class="input" placeholder="Ej: 1 o -1 (entero no cero)">
+                        <button id="btn_anadir_pto_cal_red" class="btn btn-secondary" style="margin-bottom: 10px;">Añadir Punto de Calibración</button>
+                        <p style="font-size:0.9em; color:var(--text-secondary); margin-bottom:5px;">Puntos para calibrar d<sub>red</sub>:</p>
+                        <ul id="lista_puntos_cal_red" class="point-list" style="margin-bottom:15px; min-height: 40px;"></ul>
+                        <button id="btn_calcular_d_red" class="btn btn-main" style="margin-bottom:10px;">Calcular Constante de Red (d<sub>red</sub>)</button>
+                        <div id="display_constante_red" style="margin-top:5px; margin-bottom:15px; padding:10px; border: 1px solid var(--border-color); border-radius: 8px;">
+                            Constante de Red (d<sub>red</sub>): No calculada.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="frame">
+                    <h3 class="frame-title accordion-toggle">
+                        2. Análisis de Líneas Desconocidas <span class="accordion-indicator">[+]</span>
+                    </h3>
+                    <div class="accordion-content collapsed">
+                        <label for="angulo_desc_grados">Ángulo Medido (θ<sub>desc</sub>, grados):</label>
+                        <input type="text" id="angulo_desc_grados" class="input" placeholder="Ej: 20.1, -15.0">
+                        <label for="orden_desc">Orden de Difracción (m<sub>desc</sub>):</label>
+                        <input type="text" id="orden_desc" class="input" placeholder="Ej: 1, -1, 2, -2">
+                        <button id="btn_anadir_y_calcular_lambda" class="btn btn-main">Añadir y Calcular λ</button>
+                        <table id="predictionTable">
+                            <thead><tr><th>N°</th><th>θ<sub>desc</sub> (°)</th><th>m<sub>desc</sub></th><th>λ Calc. (nm)</th><th>Color</th><th>Acción</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                        <button id="clearPredictionsBtn" class="btn btn-secondary" style="margin-top: 15px; width: auto;">Limpiar Predicciones</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3><i class="fa-solid fa-cogs"></i> Opciones</h3>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button class="btn btn-secondary" id="downloadCalChartBtn"><i class="fa-solid fa-download"></i> Descargar Gráfico Calibración (PNG)</button>
+                        <button class="btn btn-secondary" id="downloadAnalysisChartBtn"><i class="fa-solid fa-download"></i> Descargar Gráfico Análisis (PNG)</button>
+                        <button class="btn btn-secondary" id="exportCsvBtn"><i class="fa-solid fa-file-csv"></i> Exportar Datos (CSV)</button>
+                        <a id="whatsappShareBtn" href="#" target="_blank" class="btn btn-whatsapp disabled"><i class="fab fa-whatsapp"></i> Compartir por WhatsApp</a>
+                    </div>
+                </div>
+            </div>
+            <div class="plot-panel">
+                <div class="chart-container">
+                    <h3>Gráfico de Calibración: m vs. sin(θ)/λ</h3>
+                    <p>La pendiente de la recta de ajuste es d<sub>red</sub>.</p>
+                    <canvas id="orderAngleChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Gráfico de Análisis: λ vs. θ</h3>
+                    <p>Longitudes de onda calculadas a partir de los ángulos medidos.</p>
+                    <canvas id="goniometerChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="identification" class="tab-pane">
+        <div class="content-grid">
+            <div class="controls-panel" style="gap: 25px;">
+                <div class="card">
+                    <h3><i class="fa-solid fa-flask-vial"></i> Análisis de Muestra</h3>
+                    <p style="color:var(--text-secondary); text-align: center; margin-bottom: 20px;">Use las predicciones de la Pestaña 1 como la muestra desconocida.</p>
+                    <button id="identifyBtn" class="btn btn-main" style="width:100%"><i class="fa-solid fa-atom"></i> Identificar Muestra</button>
+                    <div id="identification-result" style="margin-top: 15px; text-align: center; font-size: 1.1rem; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px;">Aún no se ha analizado ninguna muestra.</div>
+                </div>
+                <div class="card">
+                    <h3><i class="fa-solid fa-book"></i> Referencia (NIST)</h3>
+                    <label for="theoreticalElementSelect">Comparar con el espectro de:</label>
+                    <select id="theoreticalElementSelect"></select>
+                </div>
+                 <div class="card">
+                    <h3><i class="fa-solid fa-table-list"></i> Líneas Espectrales de Referencia</h3>
+                    <div id="reference-table-container" style="max-height: 280px; overflow-y: auto;"></div>
+                 </div>
+            </div>
+            
+            <div class="card">
+                <h3><i class="fa-solid fa-eye"></i> Visualizador de Espectros</h3>
+                 <div class="mode-switch" style="display: flex; justify-content: center; gap: 10px; margin-bottom: 15px;">
+                    <button id="emissionBtn" class="btn active">Emisión</button>
+                    <button id="absorptionBtn" class="btn">Absorción</button>
+                 </div>
+                <h4>Espectro Medido (Predicciones)</h4>
+                <div id="measured-spectrum-container" class="spectrum-display"></div>
+                <h4 style="margin-top: 20px;">Referencia NITS</h4>
+                <div id="theoretical-spectrum-container" class="spectrum-display"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="chatbot" class="tab-pane">
+        <div class="card">
+            <h3><i class="fa-solid fa-robot"></i> Chatbot IA (Experimental)</h3>
+            <p class="api-warning"><b>ADVERTENCIA:</b> Esta función envía tu conversación a una API de IA externa (Google Gemini). <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">Obtén tu API Key aquí</a>.</p>
+            <label for="apiKey">Google AI API Key:</label>
+            <input type="password" id="apiKey" placeholder="Pega tu API Key aquí" style="margin-bottom: 20px;">
+            <div id="chat-window">
+                <div class="bot-message">Hola, soy un asistente especializado en este código. Pregúntame sobre su estructura, funciones o cualquier parte del mismo.</div>
+            </div>
+            <div id="chat-input-container">
+                <input type="text" id="chat-input" placeholder="Escribe tu mensaje...">
+                <button id="send-chat-btn" class="btn btn-main" style="width: auto;">Enviar <i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="main-footer">
+    <p>© 2025 Complemento de Laboratorio. Derechos reservados por Bonifacio Fernández.</p>
+</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    let state = {}; 
+    const knownSpectra = {
+        "Mercurio (Hg)": [
+            { w: 404.6563, i: 10, color_name: "Violeta", intensity_str: "Muy fuerte", transition: "Hg I" },
+            { w: 407.7832, i: 6, color_name: "Violeta", intensity_str: "Media", transition: "Hg I" },
+            { w: 435.8336, i: 10, color_name: "Azul", intensity_str: "Muy fuerte", transition: "Hg I" },
+            { w: 546.0732, i: 10, color_name: "Verde", intensity_str: "Muy fuerte", transition: "Hg I" },
+            { w: 576.9599, i: 6, color_name: "Amarillo", intensity_str: "Media", transition: "Hg I" },
+            { w: 579.0662, i: 6, color_name: "Amarillo", intensity_str: "Media", transition: "Hg I" },
+        ],
+        "Sodio (Na)": [ 
+            { w: 588.995, i: 10, color_name: "Amarillo", intensity_str: "Muy fuerte", transition: "Na I (D₂)" },
+            { w: 589.5924, i: 10, color_name: "Amarillo", intensity_str: "Muy fuerte", transition: "Na I (D₁)" },
+        ],
+        "Helio (He)": [
+            { w: 447.1482, i: 8, color_name: "Azul", intensity_str: "Fuerte", transition: "He I" },
+            { w: 471.3141, i: 4, color_name: "Azul-verdoso", intensity_str: "Débil", transition: "He I" },
+            { w: 492.1933, i: 6, color_name: "Verde-azulado", intensity_str: "Media", transition: "He I" },
+            { w: 501.5676, i: 6, color_name: "Verde", intensity_str: "Media", transition: "He I" },
+            { w: 587.5618, i: 10, color_name: "Amarillo", intensity_str: "Muy fuerte", transition: "He I (D₃)" },
+            { w: 667.8151, i: 8, color_name: "Rojo", intensity_str: "Fuerte", transition: "He I" },
+        ],
+        "Hidrógeno (H)": [ 
+            { w: 434.0506, i: 6, color_name: "Violeta", intensity_str: "Media", transition: "H I (Balmer Hγ)" },
+            { w: 486.1332, i: 6, color_name: "Azul-verdoso", intensity_str: "Media", transition: "H I (Balmer Hβ)" },
+            { w: 656.2852, i: 8, color_name: "Rojo", intensity_str: "Fuerte", transition: "H I (Balmer Hα)" }
+        ],
+        "Neón (Ne)": [
+            { w: 585.2484, i: 8, color_name: "Amarillo", intensity_str: "Fuerte", transition: "Ne I" },
+            { w: 594.4837, i: 8, color_name: "Amarillo", intensity_str: "Fuerte", transition: "Ne I" },
+            { w: 640.2247, i: 8, color_name: "Naranja-rojo", intensity_str: "Fuerte", transition: "Ne I" },
+            { w: 650.6532, i: 8, color_name: "Rojo", intensity_str: "Fuerte", transition: "Ne I" },
+        ]
+    };
+    
+    const getEl = (id) => document.getElementById(id);
+
+    const setZeroBtn = getEl('setZeroBtn');
+    const zeroDegIn = getEl('zero_deg');
+    const zeroMinIn = getEl('zero_min');
+    const zeroPositionDisplay = getEl('zeroPositionDisplay');
+    const rawDegIn = getEl('raw_deg');
+    const rawMinIn = getEl('raw_min');
+    const rawOrderIn = getEl('raw_order');
+    const rawColorIn = getEl('raw_color');
+    const addRawDataBtn = getEl('addRawDataBtn');
+    const rawDataTableBody = getEl('rawDataTable').querySelector('tbody');
+    
+    const lambdaCalConocidaIn = getEl('lambda_cal_conocida');
+    const anguloCalGradosIn = getEl('angulo_cal_grados');
+    const ordenCalIn = getEl('orden_cal');
+    const btnAnadirPtoCalRed = getEl('btn_anadir_pto_cal_red');
+    const listaPtosCalRed = getEl('lista_puntos_cal_red');
+    const btnCalcularDRed = getEl('btn_calcular_d_red');
+    const displayConstanteRed = getEl('display_constante_red');
+    
+    const anguloDescGradosIn = getEl('angulo_desc_grados');
+    const ordenDescIn = getEl('orden_desc');
+    const btnAnadirYCalcularLambda = getEl('btn_anadir_y_calcular_lambda');
+    
+    const predTableBody = getEl('predictionTable').querySelector('tbody');
+    const goniometerChartCanvas = getEl('goniometerChart');
+    const orderAngleChartCanvas = getEl('orderAngleChart'); 
+    const tabs = document.querySelectorAll('.tab-button');
+    const tabPanes = document.querySelectorAll('.tab-pane, .tab-content');
+    const clearPredictionsBtn = getEl('clearPredictionsBtn'); 
+
+    // Export/Share Buttons
+    const downloadCalChartBtn = getEl('downloadCalChartBtn');
+    const downloadAnalysisChartBtn = getEl('downloadAnalysisChartBtn');
+    const exportCsvBtn = getEl('exportCsvBtn');
+    const whatsappShareBtn = getEl('whatsappShareBtn');
+
+    // Identification Elements
+    const identifyBtn = getEl('identifyBtn');
+    const identificationResult = getEl('identification-result');
+    const theoreticalElementSelect = getEl('theoreticalElementSelect');
+    const emissionBtn = getEl('emissionBtn');
+    const absorptionBtn = getEl('absorptionBtn');
+    const measuredSpectrumContainer = getEl('measured-spectrum-container');
+    const theoreticalSpectrumContainer = getEl('theoretical-spectrum-container');
+    const referenceTableContainer = getEl('reference-table-container');
+
+    // Chatbot Elements
+    const apiKeyInput = getEl('apiKey');
+    const chatWindow = getEl('chat-window');
+    const chatInput = getEl('chat-input');
+    const sendChatBtn = getEl('send-chat-btn');
+
+    const estimateColor=(l)=>{if(isNaN(l))return{n:"N/A",h:"#4a4a4a"};if(l<400)return{n:"UV",h:"#8A2BE2"};if(l<450)return{n:"Violeta",h:"#8A2BE2"};if(l<495)return{n:"Azul",h:"#3498db"};if(l<570)return{n:"Verde",h:"#2ecc71"};if(l<590)return{n:"Amarillo",h:"#f1c40f"};if(l<620)return{n:"Naranja",h:"#f39c12"};if(l<=750)return{n:"Rojo",h:"#e74c3c"};return{n:"IR",h:"#4a4a4a"};};
+    const toDecimalDegrees = (deg, min) => (deg || 0) + (min || 0) / 60.0;
+
+    const init = () => {
+        state = {
+            zeroPositionDecimal: 0.0,
+            rawMeasurements: [],
+            constanteRed: null, 
+            puntosCalibracionRed: [], 
+            predPoints: [], 
+            goniometerChart: null, 
+            orderAngleChart: null, 
+            identificationMode: 'emission',
+            theoreticalElement: 'Mercurio (Hg)',
+            identificationDetails: { element: "N/A", averageError: 0, hasBeenRun: false }
+        };
+
+        Object.keys(knownSpectra).sort().forEach(key => theoreticalElementSelect.add(new Option(key, key)));
+        theoreticalElementSelect.value = state.theoreticalElement;
+        
+        const createChart = (canvas, options) => new Chart(canvas.getContext('2d'), { type: 'scatter', data: { datasets: [] }, options });
+
+        const baseChartOptions = {
+            responsive: true, maintainAspectRatio: true, animation: false,
+            scales: { x: {}, y: {} },
+            plugins: { legend: {}, tooltip: {} }
+        };
+
+        const goniometerOptions = JSON.parse(JSON.stringify(baseChartOptions));
+        goniometerOptions.scales.x = { title: { display: true, text: 'θ_medido (°)' }, min: -45, max: 45 };
+        goniometerOptions.scales.y = { title: { display: true, text: 'λ_calculada (nm)' }, min: 380, max: 750 };
+        state.goniometerChart = createChart(goniometerChartCanvas, goniometerOptions);
+        
+        const orderAngleOptions = JSON.parse(JSON.stringify(baseChartOptions));
+        orderAngleOptions.scales.x = { title: { display: true, text: 'sin(θ_cal) / λ_cal (nm⁻¹)' }, min: 0, max: 0.005 };
+        orderAngleOptions.scales.y = { title: { display: true, text: 'm_cal (Orden)' }, min: -2, max: 2 };
+        state.orderAngleChart = createChart(orderAngleChartCanvas, orderAngleOptions);
+        
+        const accordionToggles = document.querySelectorAll('.accordion-toggle');
+        accordionToggles.forEach(toggle => {
+            const content = toggle.nextElementSibling;
+            const indicator = toggle.querySelector('.accordion-indicator');
+            if (content && content.classList.contains('accordion-content')) {
+                if(indicator) indicator.textContent = content.classList.contains('collapsed') ? '[+]' : '[–]';
+            }
+            toggle.addEventListener('click', (e) => {
+                if (e.target.closest('button')) return;
+                if (content && content.classList.contains('accordion-content')) {
+                    content.classList.toggle('collapsed');
+                    if(indicator) indicator.textContent = content.classList.contains('collapsed') ? '[+]' : '[–]';
+                }
+            });
+        });
+
+        renderizarUIPrincipal();
+        renderIdentificationUI();
+    };
+    
+    // Raw Data Functions
+    const setZeroPosition = () => {
+        const deg = parseInt(zeroDegIn.value);
+        const min = parseInt(zeroMinIn.value);
+        state.zeroPositionDecimal = toDecimalDegrees(deg, min);
+        zeroPositionDisplay.textContent = `Posición del Cero: ${state.zeroPositionDecimal.toFixed(3)}°`;
+    };
+
+    const addRawMeasurement = () => {
+        try {
+            const deg = parseInt(rawDegIn.value), min = parseInt(rawMinIn.value);
+            const order = parseInt(rawOrderIn.value);
+            if ((isNaN(deg) && isNaN(min)) || isNaN(order) || order === 0) throw new Error("Datos inválidos.");
+            const measuredDecimal = toDecimalDegrees(deg, min);
+            state.rawMeasurements.push({
+                rawDeg: deg || 0, rawMin: min || 0, order,
+                color: rawColorIn.value.trim() || "N/A",
+                finalAngle: measuredDecimal - state.zeroPositionDecimal
+            });
+            rawDegIn.value = rawMinIn.value = rawOrderIn.value = rawColorIn.value = '';
+            rawDegIn.focus();
+            renderizarUIPrincipal();
+        } catch (e) { alert(`Error: ${e.message}`); }
+    };
+    
+    // Core Logic
+    const agregarPuntoCalibracionRed = () => {
+        try {
+            const lambdaCal = parseFloat(lambdaCalConocidaIn.value);
+            const anguloCal = parseFloat(anguloCalGradosIn.value);
+            const ordenCalNum = parseInt(ordenCalIn.value);
+            if (isNaN(lambdaCal) || isNaN(anguloCal) || isNaN(ordenCalNum) || ordenCalNum === 0 || Math.abs(anguloCal) >= 90) throw new Error("Datos de calibración inválidos.");
+            if (Math.sign(ordenCalNum) !== Math.sign(Math.sin(anguloCal * Math.PI / 180))) throw new Error("Inconsistencia de signos entre orden y ángulo.");
+            state.puntosCalibracionRed.push({ lambdaConocida: lambdaCal, anguloGrados: anguloCal, orden: ordenCalNum });
+            lambdaCalConocidaIn.value = anguloCalGradosIn.value = ordenCalIn.value = '';
+            lambdaCalConocidaIn.focus();
+            renderizarUIPrincipal();
+        } catch (e) { alert(`Error: ${e.message}`); }
+    };
+
+    const calcularConstanteRed = () => {
+        if (state.puntosCalibracionRed.length === 0) return alert("Añada al menos un punto de calibración.");
+        const dRedValues = state.puntosCalibracionRed.map(p => (p.orden * p.lambdaConocida) / Math.sin(p.anguloGrados * Math.PI / 180)).filter(d => d > 0);
+        if (dRedValues.length === 0) {
+            state.constanteRed = null;
+            alert("No se pudo calcular d_red. Verifique los puntos.");
+        } else {
+            state.constanteRed = dRedValues.reduce((a, b) => a + b, 0) / dRedValues.length;
+            if (state.predPoints.length > 0) {
+                state.predPoints = [];
+                state.identificationDetails.hasBeenRun = false;
+                updateWhatsAppButton(false);
+                alert("Constante de red recalculada. Las predicciones anteriores han sido limpiadas.");
+            }
+        }
+        renderizarUIPrincipal();
+    };
+
+    const predecirLambdaDesdeAngulo = () => {
+        if (!state.constanteRed) return alert("Primero calcule la constante de la red (d_red).");
+        try {
+            const anguloDesc = parseFloat(anguloDescGradosIn.value);
+            const ordenDescNum = parseInt(ordenDescIn.value);
+            if (isNaN(anguloDesc) || isNaN(ordenDescNum) || ordenDescNum === 0 || Math.abs(anguloDesc) >= 90) throw new Error("Datos de predicción inválidos.");
+            const lambdaPredicha = (state.constanteRed * Math.sin(anguloDesc * Math.PI / 180)) / ordenDescNum;
+            if (lambdaPredicha <= 0) throw new Error("El cálculo resultó en una λ no positiva. Verifique la consistencia de signos.");
+            state.predPoints.push({ anguloGrados: anguloDesc, orden: ordenDescNum, lambda: lambdaPredicha, colorEstimado: estimateColor(lambdaPredicha) });
+            anguloDescGradosIn.value = ordenDescIn.value = '';
+            anguloDescGradosIn.focus();
+            state.identificationDetails.hasBeenRun = false;
+            updateWhatsAppButton(false);
+            identificationResult.innerHTML = "Aún no se ha analizado ninguna muestra.";
+            renderizarUIPrincipal();
+        } catch (e) { alert(`Error: ${e.message}`); }
+    };
+    
+    // UI Rendering
+    const renderizarUIPrincipal = () => {
+        rawDataTableBody.innerHTML = state.rawMeasurements.map((m, i) => `
+            <tr><td>${m.rawDeg}° ${m.rawMin}'</td><td>${m.order}</td><td>${m.color}</td><td>${m.finalAngle.toFixed(3)}°</td>
+            <td>
+                <button class="btn btn-secondary" style="font-size:0.8em;padding:4px 6px;width:auto;" onclick="window.useRawForCal(${i})">Calibrar</button>
+                <button class="btn btn-main" style="font-size:0.8em;padding:4px 6px;width:auto;" onclick="window.useRawForAnalysis(${i})">Analizar</button>
+            </td></tr>`).join('');
+        listaPtosCalRed.innerHTML = state.puntosCalibracionRed.map((p, i) => `<li>P${i + 1}: λ=${p.lambdaConocida.toFixed(2)}nm, θ=${p.anguloGrados.toFixed(2)}°, m=${p.orden}</li>`).join('') || `<li>No hay puntos.</li>`;
+        displayConstanteRed.innerHTML = state.constanteRed ? `<b>d<sub>red</sub>:</b> ${state.constanteRed.toFixed(3)} nm/línea <br>(${(1 / (state.constanteRed * 1e-6)).toFixed(1)} líneas/mm)` : "<b>d<sub>red</sub>:</b> No calculada.";
+        predTableBody.innerHTML = state.predPoints.map((p, i) => `
+            <tr><td>${i+1}</td><td>${p.anguloGrados.toFixed(2)}</td><td>${p.orden}</td><td>${p.lambda.toFixed(2)}</td>
+            <td style="color:${p.colorEstimado.h};font-weight:600;">${p.colorEstimado.n}</td>
+            <td><button class="btn-delete" data-index="${i}">X</button></td></tr>`).join('');
+        updateCharts();
+        renderIdentificationUI();
+    };
+
+    const updateCharts = () => {
+        if (!state.goniometerChart || !state.orderAngleChart) return;
+        const style = getComputedStyle(document.documentElement);
+        const textColor = style.getPropertyValue('--chart-text-color').trim();
+        const gridColor = style.getPropertyValue('--chart-grid-color').trim();
+        const plotBg = style.getPropertyValue('--plot-bg').trim();
+
+        [state.goniometerChart, state.orderAngleChart].forEach(chart => {
+            chart.options.scales.x.title.color = textColor;
+            chart.options.scales.y.title.color = textColor;
+            chart.options.scales.x.ticks.color = textColor;
+            chart.options.scales.y.ticks.color = textColor;
+            chart.options.scales.x.grid.color = gridColor;
+            chart.options.scales.y.grid.color = gridColor;
+            chart.options.plugins.legend.labels.color = textColor;
+            chart.options.plugins.title = { color: textColor };
+            chart.canvas.parentElement.style.backgroundColor = plotBg;
+        });
+
+        state.goniometerChart.data.datasets = [{
+            label: 'λ Calculadas',
+            data: state.predPoints.map(p => ({ x: p.anguloGrados, y: p.lambda })),
+            backgroundColor: 'rgba(231, 76, 60, 0.8)', pointRadius: 7
+        }];
+        
+        const calPoints = state.puntosCalibracionRed.map(p => ({
+            x: Math.sin(p.anguloGrados * Math.PI / 180) / p.lambdaConocida,
+            y: p.orden
+        })).filter(p => isFinite(p.x) && isFinite(p.y));
+        const calDatasets = [{ label: 'Puntos de Calibración', data: calPoints, backgroundColor: 'rgba(52, 152, 219, 0.8)', pointRadius: 7 }];
+        if (state.constanteRed && calPoints.length > 0) {
+            const xVals = calPoints.map(p => p.x);
+            const minX = Math.min(...xVals), maxX = Math.max(...xVals);
+            const padding = (maxX - minX) * 0.1 || 0.0001;
+            calDatasets.push({
+                label: `Ajuste (d_red ≈ ${state.constanteRed.toFixed(2)})`,
+                data: [{x: minX - padding, y: (minX-padding) * state.constanteRed}, {x: maxX + padding, y: (maxX+padding) * state.constanteRed}],
+                borderColor: '#ef4444', borderWidth: 2.5, type: 'line', fill: false, pointRadius: 0
+            });
+        }
+        state.orderAngleChart.data.datasets = calDatasets;
+        
+        state.goniometerChart.update('none');
+        state.orderAngleChart.update('none');
+    };
+    
+    // Identification UI
+    const renderSpectrum=(c,s,m)=>{const i=m==='absorption';c.style.background=i?'linear-gradient(to right, #8A2BE2, #4169E1, #00BFFF, #00FF00, #FFFF00, #FFA500, #FF0000)':'#000';c.innerHTML='<div class="reference-marker"></div><div class="wavelength-indicator"></div>';const n=380,r=750,a=r-n;s.forEach(e=>{if(e.l>=n&&e.l<=r){const t=(e.l-n)/a*100,d=document.createElement('div');d.className='line',d.style.left=`${t}%`,d.style.backgroundColor=i?'#000':e.c.h,d.style.opacity=`${.4+(e.i||10)/16}`,c.appendChild(d)}});for(let l=400;l<=700;l+=50){const o=(l-n)/a*100,p=document.createElement('div');p.className='wavelength-label',p.style.left=`${o}%`,p.textContent=l,c.appendChild(p)}};
+    const renderReferenceTable=(e)=>{const t=knownSpectra[e];if(!t||t.length===0)return void(referenceTableContainer.innerHTML='<p>No hay datos.</p>');let n='<table id="reference-table"><thead><tr><th>λ (nm)</th><th>Color</th><th>Intensidad</th></tr></thead><tbody>';t.forEach(l=>{const a=estimateColor(l.w);n+=`<tr><td>${l.w.toFixed(2)}</td><td style="color:${a.h}; font-weight:600;">${l.color_name||a.n}</td><td>${l.intensity_str||"N/A"}</td></tr>`}),referenceTableContainer.innerHTML=n+'</tbody></table>'};
+    const renderIdentificationUI=()=>{emissionBtn.classList.toggle('active',state.identificationMode==='emission'),absorptionBtn.classList.toggle('active',state.identificationMode==='absorption');const e=state.predPoints.map(t=>({l:t.lambda,c:t.colorEstimado,i:10}));renderSpectrum(measuredSpectrumContainer,e,state.identificationMode);const t=knownSpectra[state.theoreticalElement],n=t?t.map(l=>({l:l.w,c:estimateColor(l.w),i:l.i})):[];renderSpectrum(theoreticalSpectrumContainer,n,state.identificationMode),renderReferenceTable(state.theoreticalElement)};
+
+    // Event Listeners Setup
+    setZeroBtn.addEventListener('click', setZeroPosition);
+    addRawDataBtn.addEventListener('click', addRawMeasurement);
+    btnAnadirPtoCalRed.addEventListener('click', agregarPuntoCalibracionRed);
+    btnCalcularDRed.addEventListener('click', calcularConstanteRed);
+    btnAnadirYCalcularLambda.addEventListener('click', predecirLambdaDesdeAngulo);
+
+    window.useRawForCal = (index) => {
+        const m = state.rawMeasurements[index];
+        anguloCalGradosIn.value = m.finalAngle.toFixed(3);
+        ordenCalIn.value = m.order;
+        lambdaCalConocidaIn.focus();
+    };
+    window.useRawForAnalysis = (index) => {
+        const m = state.rawMeasurements[index];
+        anguloDescGradosIn.value = m.finalAngle.toFixed(3);
+        ordenDescIn.value = m.order;
+        btnAnadirYCalcularLambda.focus();
+    };
+
+    predTableBody.addEventListener('click', (e) => {
+        if (e.target.classList.contains('btn-delete')) {
+            state.predPoints.splice(parseInt(e.target.dataset.index), 1);
+            updateWhatsAppButton(false);
+            renderizarUIPrincipal();
+        }
+    });
+
+    tabs.forEach(tab => tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active')); tab.classList.add('active');
+        tabPanes.forEach(p => p.classList.remove('active')); getEl(tab.dataset.tab).classList.add('active');
+    }));
+    
+    clearPredictionsBtn.addEventListener('click', () => {
+        state.predPoints = [];
+        state.identificationDetails.hasBeenRun = false;
+        identificationResult.innerHTML = "Aún no se ha analizado ninguna muestra.";
+        updateWhatsAppButton(false);
+        renderizarUIPrincipal(); 
+    });
+    
+    const updateWhatsAppButton = (active, message = '') => {
+        if (active) {
+            whatsappShareBtn.classList.remove('disabled');
+            whatsappShareBtn.href = `https://wa.me/?text=${encodeURIComponent(message)}`;
+        } else {
+            whatsappShareBtn.classList.add('disabled');
+            whatsappShareBtn.href = '#';
+        }
+    };
+    
+    identifyBtn.addEventListener('click',()=>{
+        if(state.predPoints.length===0) return alert("Añada predicciones primero.");
+        let bestMatch={name:"Desconocido",score:Infinity};
+        for(const[name,spectrum] of Object.entries(knownSpectra)){
+            if(!spectrum||spectrum.length===0) continue;
+            let totalError=0;
+            state.predPoints.forEach(unknown=>{
+                let minError=Math.min(...spectrum.map(known=>Math.abs(unknown.lambda-known.w)));
+                if(isFinite(minError)) totalError+=minError;
+            });
+            const avgError=state.predPoints.length>0?totalError/state.predPoints.length:Infinity;
+            if(avgError<bestMatch.score) bestMatch={name,score:avgError};
+        }
+        identificationResult.innerHTML=`Elemento más probable: <span>${bestMatch.name}</span><br>(Error prom: ${isFinite(bestMatch.score)?bestMatch.score.toFixed(2):"N/A"} nm)`;
+        state.theoreticalElement=bestMatch.name;
+        theoreticalElementSelect.value=bestMatch.name;
+        state.identificationDetails={element:bestMatch.name,averageError:bestMatch.score,hasBeenRun:true};
+        
+        const message = `*Resultados de Análisis Espectral (Goniómetro):*\n- Elemento más probable: *${bestMatch.name}*\n- Error promedio: *${isFinite(bestMatch.score) ? bestMatch.score.toFixed(2) : 'N/A'} nm*`;
+        updateWhatsAppButton(true, message);
+        renderIdentificationUI();
+    });
+
+    theoreticalElementSelect.addEventListener('change',(e)=>{state.theoreticalElement=e.target.value,renderIdentificationUI()});
+    emissionBtn.addEventListener('click',()=>{state.identificationMode='emission',renderIdentificationUI()});
+    absorptionBtn.addEventListener('click',()=>{state.identificationMode='absorption',renderIdentificationUI()});
+    
+    [measuredSpectrumContainer,theoreticalSpectrumContainer].forEach(c=>{const e=380,t=750,n=t-e;c.addEventListener('mousemove',l=>{const a=c.querySelector('.reference-marker'),s=c.querySelector('.wavelength-indicator');if(!a||!s)return;const o=c.getBoundingClientRect(),r=l.clientX-o.left,d=r/o.width,i=e+d*n;a.style.display=s.style.display='block',a.style.left=s.style.left=`${d*100}%`,s.textContent=`λ ${i.toFixed(1)} nm`,s.style.transform=d*100>85?"translateX(-100%) translateX(-5px)":"translateX(5px)"}),c.addEventListener('mouseleave',l=>{l.currentTarget.querySelector('.reference-marker').style.display='none',l.currentTarget.querySelector('.wavelength-indicator').style.display='none'})});
+    
+    // Theme Toggle Logic
+    const themeToggle = getEl('theme-toggle');
+    const docElement = document.documentElement;
+    function applyTheme(theme) {
+        docElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+        themeToggle.innerHTML = theme === 'dark' ? '☀️' : '🌙';
+        updateCharts();
+    }
+    const storedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    applyTheme(storedTheme);
+    themeToggle.addEventListener('click', () => {
+        applyTheme(docElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+    });
+
+    // Chatbot Logic
+    const handleChat=async()=>{const e=chatInput.value.trim(),t=apiKeyInput.value.trim();if(!e||!t)return alert("Por favor, ingresa tu API Key y una pregunta.");addMessageToChat('user',e),chatInput.value='';const n=addMessageToChat('bot','...',!0),l=`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${t}`,a=document.documentElement.outerHTML,s=`Eres un asistente de IA especializado en analizar código HTML, CSS y JavaScript. Basa TODAS tus respuestas exclusivamente en el código que te proporciono.\n\nCÓDIGO:\n\`\`\`html\n${a}\n\`\`\`\n\nPregunta: "${e}"`;try{const o=await fetch(l,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:s}]}]})}),r=await o.json();n.remove(),o.ok&&r.candidates?.[0]?.content?.parts?.[0]?.text?addMessageToChat('bot',r.candidates[0].content.parts[0].text):addMessageToChat('bot',`Error de la IA: ${r.error?.message||"No se pudo obtener respuesta."}`)}catch(c){n.remove(),addMessageToChat('bot',`Error de red: ${c.message}`)}};
+    const addMessageToChat=(e,t,n=!1)=>{const l=document.createElement('div');return l.className=`chat-message ${e}-message`,n?l.textContent="Escribiendo...":(l.textContent=t),chatWindow.appendChild(l),chatWindow.scrollTop=chatWindow.scrollHeight,l};
+    sendChatBtn.addEventListener('click', handleChat);
+    chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); handleChat(); } });
+
+    // Export and Download Logic
+    const downloadChartImage = (chart, filename) => {
+        if (!chart || !chart.canvas) {
+            alert("El gráfico no está disponible para descargar.");
+            return;
+        }
+        const link = document.createElement('a');
+        link.href = chart.toBase64Image('image/png', 1.0);
+        link.download = filename;
+        link.click();
+    };
+    
+    downloadCalChartBtn.addEventListener('click', () => downloadChartImage(state.orderAngleChart, 'grafico_calibracion_goniometro.png'));
+    downloadAnalysisChartBtn.addEventListener('click', () => downloadChartImage(state.goniometerChart, 'grafico_analisis_goniometro.png'));
+
+    const performCsvExport = () => {
+        let csv = "RESULTADOS DE ANÁLISIS ESPECTRAL (GONIÓMETRO)\r\n\r\n";
+        csv += "CALIBRACIÓN DE RED\r\n";
+        if (state.constanteRed) {
+            csv += `d_red (nm/línea),${state.constanteRed.toFixed(4)}\r\n`;
+            csv += `d_red (líneas/mm),${(1 / (state.constanteRed * 1e-6)).toFixed(2)}\r\n`;
+        } else {
+            csv += `d_red,No Calculada\r\n`;
+        }
+        csv += "\r\nPuntos de Calibración Usados\r\nLambda (nm),Ángulo (°),Orden (m)\r\n";
+        state.puntosCalibracionRed.forEach(p => { csv += `${p.lambdaConocida.toFixed(2)},${p.anguloGrados.toFixed(3)},${p.orden}\r\n` });
+        
+        csv += "\r\nPREDICCIONES\r\nN°,Ángulo (°),Orden (m),Lambda Calc. (nm),Color\r\n";
+        state.predPoints.forEach((p, i) => { csv += `${i + 1},${p.anguloGrados.toFixed(3)},${p.orden},${p.lambda.toFixed(2)},${p.colorEstimado.n}\r\n` });
+
+        if (state.identificationDetails.hasBeenRun) {
+            csv +=`\r\nIDENTIFICACIÓN\r\nElemento,${state.identificationDetails.element}\r\nError Promedio (nm),${isFinite(state.identificationDetails.averageError) ? state.identificationDetails.averageError.toFixed(3) : 'N/A'}\r\n`;
+        }
+        const link = document.createElement("a");
+        link.href = 'data:text/csv;charset=utf-8,' + encodeURI(csv);
+        link.download = "analisis_goniometro.csv"; 
+        link.click();
+    };
+    exportCsvBtn.addEventListener('click', performCsvExport);
+
+    init();
+});
+</script>
+
+</body>
+</html>

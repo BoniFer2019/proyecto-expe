@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html data-theme="dark" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Experimento de Millikan v3.5 | Parámetros Ambientales</title>
+
+<!-- Google Fonts y Font Awesome -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<!-- Librerías para Gráficos y PDF -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<style>
+        :root {
+            --bg-primary: #1a1a1a; --bg-secondary: #2c2c2c; --bg-header: #222;
+            --text-primary: #f0f0f0; --text-secondary: #b3b3b3; --border-color: #444;
+            --accent-color: #4da6ff; --accent-hover: #3d8bdb; --green: #2ecc71;
+            --red: #e74c3c; --blue: #3498db; --purple: #9b59b6; --orange: #f39c12;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.3); --shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.5);
+            --chart-grid-color: rgba(255, 255, 255, 0.1); --chart-text-color: var(--text-secondary);
+        }
+        [data-theme="light"] {
+            --bg-primary: #f4f4f9; --bg-secondary: #ffffff; --bg-header: #ffffff;
+            --text-primary: #1a1a1a; --text-secondary: #555555; --border-color: #dddddd;
+            --accent-color: #007bff; --accent-hover: #0056b3; --green: #28a745;
+            --red: #dc3545; --blue: #007bff; --purple: #6f42c1; --orange: #fd7e14;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.08); --shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.12);
+            --chart-grid-color: rgba(0, 0, 0, 0.08); --chart-text-color: var(--text-secondary);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Roboto', sans-serif; background-color: var(--bg-primary);
+            color: var(--text-primary); line-height: 1.6; padding-bottom: 50px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .container { max-width: 1200px; margin: 20px auto; padding: 15px; }
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            background-color: var(--bg-header); color: var(--text-primary);
+            padding: 1rem 3%; border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: background-color 0.3s ease, border-color 0.3s ease;
+            gap: 15px;
+        }
+        .back-link {
+            color: var(--text-secondary); text-decoration: none; font-size: 1rem;
+            display: flex; align-items: center; gap: 8px; transition: color 0.3s ease;
+            white-space: nowrap;
+        }
+        .back-link:hover { color: var(--accent-color); }
+        .back-link i { font-size: 1.2rem; }
+        .header-title { text-align: center; flex-grow: 1; }
+        header h1 { font-size: 1.8rem; margin: 0; font-weight: 700; }
+        header p { color: var(--text-secondary); margin-top: 2px; font-size: 0.9rem; }
+        #theme-toggle {
+            background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color);
+            border-radius: 50%; width: 45px; height: 45px; cursor: pointer; font-size: 1.3rem;
+            display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+        #theme-toggle:hover { transform: scale(1.1) rotate(15deg); }
+        .card {
+            background-color: var(--bg-secondary); border: 1px solid var(--border-color);
+            border-radius: 12px; padding: 25px; margin-top: 25px; box-shadow: var(--shadow); 
+            transition: all 0.3s ease;
+        }
+        .tabs { display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 25px; }
+        .tab-button {
+            padding: 12px 25px; cursor: pointer; border: none; background-color: transparent;
+            font-size: 1.1rem; font-weight: 500; color: var(--text-secondary);
+            border-bottom: 4px solid transparent; transition: all 0.3s ease;
+        }
+        .tab-button.active { color: var(--accent-color); border-bottom-color: var(--accent-color); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        #chronometer-display {
+            font-family: 'Courier New', Courier, monospace; font-size: 4rem; font-weight: bold;
+            color: #fff; background-color: #1e272e; border-radius: 8px; padding: 20px;
+            text-align: center; margin-bottom: 25px; letter-spacing: 2px;
+        }
+        .button-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .btn {
+            padding: 15px; font-size: 1rem; font-weight: 500; border-radius: 8px; border: none;
+            color: white; cursor: pointer; transition: all 0.3s ease; display: flex;
+            align-items: center; justify-content: center; gap: 10px;
+            -webkit-tap-highlight-color: transparent; box-shadow: var(--shadow);
+        }
+        .btn:hover { opacity: 0.95; transform: translateY(-3px); box-shadow: var(--shadow-hover); }
+        .btn-start { background-color: var(--green); } .btn-stop { background-color: var(--red); }
+        .btn-mark { background-color: var(--blue); } .btn-clear { background-color: #7f8c8d; }
+        .indicators { display: flex; justify-content: space-around; margin-bottom: 20px; background-color: var(--bg-primary); padding: 15px; border-radius: 8px; }
+        .indicator { text-align: center; flex: 1; padding: 0 10px; }
+        .indicator-label { font-size: 0.9rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+        .indicator-value { font-weight: bold; font-size: 1.2rem; }
+        #results-table, #stats-table, #electron-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        #results-table th, #results-table td, #stats-table th, #stats-table td, #electron-table th, #electron-table td {
+            padding: 12px 15px; text-align: center; border: 1px solid var(--border-color);
+        }
+        #results-table th, #stats-table th, #electron-table th { background-color: #343a40; color: #f8f9fa; font-weight: 500;}
+        #results-table tbody tr:hover, #stats-table tbody tr:hover, #electron-table tbody tr:hover { background-color: rgba(127, 140, 141, 0.1); }
+        .row-bajada { background-color: rgba(231, 76, 60, 0.1); } .row-subida { background-color: rgba(52, 152, 219, 0.1); }
+        .summary { background: var(--bg-primary); padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; }
+        .stats-layout { display: grid; gap: 30px; }
+        .chart-container { position: relative; height: 400px; width: 100%; }
+        #stats-placeholder { text-align: center; color: var(--text-secondary); font-size: 1.2rem; padding: 50px 20px; border: 2px dashed var(--border-color); border-radius: 8px; }
+        .export-buttons { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 25px; justify-content: center; }
+        .btn-export { background-color: var(--purple); min-width: 180px; flex-grow: 1; }
+        .btn-export.csv { background-color: var(--green); } .btn-export.share { background-color: var(--blue); }
+        .btn-export.share-csv { background-color: var(--orange); }
+        #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); z-index: 9999; justify-content: center; align-items: center; }
+        [data-theme="light"] #loader { background-color: rgba(255, 255, 255, 0.8); }
+        .spinner { border: 8px solid #f3f3f3; border-top: 8px solid var(--accent-color); border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #electron-form, .params-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        #electron-form label, .params-grid > div { display: flex; flex-direction: column; gap: 8px; }
+        #electron-form input, #electron-form select, .params-grid input {
+            width: 100%; padding: 12px; font-size: 1rem; background-color: var(--bg-primary);
+            border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary);
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        #electron-form input:focus, #electron-form select:focus, .params-grid input:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 25%, transparent); }
+        #electron-form input:disabled { background-color: color-mix(in srgb, var(--bg-primary) 50%, var(--bg-secondary)); cursor: not-allowed; }
+        .velocity-control { display: flex; gap: 10px; } .velocity-control input { flex-grow: 1; } .velocity-control select { width: auto; }
+        #whatsapp-share { background-color: #25D366; }
+        .main-footer { text-align: center; padding: 2rem 1rem; margin-top: 40px; border-top: 1px solid var(--border-color); color: var(--text-secondary); font-size: 0.9rem; }
+        @media (max-width: 768px) {
+            header { padding: 0.75rem 5%; } .back-link span { display: none; }
+            header h1 { font-size: 1.3rem; } header p { font-size: 0.8rem; }
+            #theme-toggle { width: 40px; height: 40px; font-size: 1.1rem; } .btn { font-size: 0.9rem; }
+            #chronometer-display { font-size: 2.5rem; } .indicators { flex-direction: column; gap: 15px; }
+            #results-table th, #results-table td, #stats-table th, #stats-table td { font-size: 0.85rem; padding: 8px; }
+            .export-buttons { flex-direction: column; }
+        }
+</style>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</head>
+<body>
+<div id="loader"><div class="spinner"></div></div>
+
+<header>
+    <a href="index.html#experimentos" class="back-link" title="Volver a la página de experimentos">
+        <i class="fas fa-arrow-left"></i>
+        <span>Volver a Experimentos</span>
+    </a>
+    <div class="header-title">
+        <h1>Experimento de Millikan</h1>
+        <p>Simulador de Cronómetro y Calculadora | FaCENA – UNNE</p>
+    </div>
+    <button id="theme-toggle" title="Cambiar tema">☀️</button>
+</header>
+
+<div class="container">
+    <div class="tabs">
+        <button class="tab-button active" onclick="showTab('crono')">Cronómetro</button>
+        <button class="tab-button" onclick="showTab('stats')">Estadísticas</button>
+        <button class="tab-button" onclick="showTab('electron')">Cálculo de Carga</button>
+    </div>
+    <div class="tab-content active" id="crono">
+        <div class="card">
+            <div id="chronometer-display">00:00:00,00</div>
+            <div class="button-grid">
+                <button class="btn btn-start" id="start-stop-btn" onclick="toggle()"><i class="fa-solid fa-play"></i> Iniciar (Espacio)</button>
+                <button class="btn btn-mark" id="mark-btn" onclick="markTime()"><i class="fa-solid fa-arrows-up-down"></i> Marcar (U)</button>
+                <button class="btn btn-clear" id="clear-btn" onclick="clearData()"><i class="fa-solid fa-trash-can"></i> Limpiar Cronómetro</button>
+            </div>
+            <div class="indicators">
+                <div class="indicator"><div class="indicator-label">Última Marca</div><div class="indicator-value" id="last-mark-indicator">---</div></div>
+                <div class="indicator"><div class="indicator-label">Nº de Marcas</div><div class="indicator-value" id="marks-count-indicator">0</div></div>
+                <div class="indicator"><div class="indicator-label">Nº de Intervalos</div><div class="indicator-value" id="intervals-count-indicator">0</div></div>
+            </div>
+        </div>
+
+        <!-- ===== NUEVA SECCIÓN AQUÍ ===== -->
+        <div class="card">
+            <h3><i class="fa-solid fa-clipboard-check" style="color:var(--accent-color);"></i> Condiciones del Experimento</h3>
+            <div class="params-grid">
+                <div>
+                    <label for="param-temp">Temperatura (°C)</label>
+                    <input type="number" id="param-temp" placeholder="Ej: 25">
+                </div>
+                <div>
+                    <label for="param-humidity">Humedad (%)</label>
+                    <input type="number" id="param-humidity" placeholder="Ej: 50">
+                </div>
+                <div>
+                    <label for="param-voltage">Voltaje (V)</label>
+                    <input type="number" id="param-voltage" placeholder="Ej: 180">
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3><i class="fa-solid fa-list-ol" style="color:var(--accent-color);"></i> Resultados de Intervalos</h3>
+            <div style="overflow-x:auto;"><table id="results-table"><thead><tr><th>N° Int</th><th>Tipo</th><th>T Inicio (s)</th><th>T Fin (s)</th><th>T Calculado (s)</th></tr></thead><tbody id="results-tbody"></tbody></table></div>
+        </div>
+        <div class="card">
+            <h3><i class="fa-solid fa-chart-line" style="color:var(--accent-color);"></i> Resumen de Tiempos</h3>
+            <div class="summary" id="summary-display">Promedio T_Bajada: 0,000 s | Promedio T_Subida: 0,000 s</div>
+            <div style="margin-top: 20px; text-align: center;"><button class="btn btn-export" onclick="addToAnalysis()"><i class="fa-solid fa-flask-vial"></i> Transferir a Cálculo de Carga</button></div>
+        </div>
+    </div>
+    <div class="tab-content" id="stats">
+        <div class="card">
+            <div id="stats-placeholder"><i class="fa-solid fa-chart-pie fa-2x"></i><p>Realiza al menos una medición en el cronómetro<br>para ver el gráfico y las estadísticas.</p></div>
+            <div id="stats-content" style="display:none;"><div class="stats-layout"><div class="chart-container"><canvas id="evolution-chart"></canvas></div><div style="overflow-x:auto;"><table id="stats-table"></table></div></div></div>
+            <div class="export-buttons" id="export-controls" style="display:none;">
+                <button class="btn btn-export" onclick="exportPDF()"><i class="fa-solid fa-file-pdf"></i> Exportar Informe (PDF)</button>
+                <button class="btn btn-export csv" onclick="exportCSV()"><i class="fa-solid fa-file-csv"></i> Descargar Datos (CSV)</button>
+                <button class="btn btn-export share" onclick="shareOrDownloadImage()"><i class="fa-solid fa-share-alt"></i> Compartir/Descargar Gráficos</button>
+                <button class="btn btn-export share-csv" id="share-csv-btn" onclick="shareCSV()" style="display:none;"><i class="fa-solid fa-link"></i> Compartir Datos (CSV)</button>
+            </div>
+        </div>
+    </div>
+    <div class="tab-content" id="electron">
+        <div class="card">
+            <h3><i class="fa-solid fa-square-root-variable" style="color:var(--accent-color);"></i> Fórmula Utilizada</h3>
+            <p style="font-size:1.2rem; text-align: center; overflow-x: auto; padding: 10px 0;">$$q = \frac{6\pi d}{V} \sqrt{\frac{9\eta^3}{2g\rho}} (v_g + v_E) \sqrt{v_g}$$</p>
+        </div>
+        <div class="card">
+            <h3><i class="fa-solid fa-sliders" style="color:var(--accent-color);"></i> Parámetros de Cálculo</h3>
+            <form id="electron-form" onsubmit="event.preventDefault(); addElectronEntry();">
+                <label>Viscosidad (η) [Pa·s]: <input id="eta" required step="any" type="number" value="1.8e-5"/></label>
+                <label>Gravedad (g) [m/s²]: <input id="g" required step="any" type="number" value="9.8"/></label>
+                <label>Densidad (ρ) [kg/m³]: <input id="rho" required step="any" type="number" value="800"/></label>
+                <label>Voltaje (V) [V]: <input id="voltaje" required step="any" type="number" value="180"/></label>
+                <label>Distancia entre placas (d) [m]: <input id="d" required step="any" type="number" value="0.005"/></label>
+                <label>Distancia recorrida (Δx) [m]: <input id="dx" required step="any" type="number" value="0.001153"/></label>
+                <label>Tiempo bajada (s): <input id="t_bajada" step="any" type="number" placeholder="Ej: 12.345"/></label>
+                <label>Tiempo subida (s): <input id="t_subida" step="any" type="number" placeholder="Ej: 2.345"/></label>
+                <label>Velocidad Vg (m/s):<div class="velocity-control"><input id="vg_manual" step="any" type="number" placeholder="Cálculo manual"/><select id="modo_vg"><option value="bajada" selected>Δx / T. Bajada</option><option value="subida">Δx / T. Subida</option><option value="manual">Manual</option></select></div></label>
+                <label>Velocidad Ve (m/s):<div class="velocity-control"><input id="ve_manual" step="any" type="number" placeholder="Cálculo manual"/><select id="modo_ve"><option value="bajada">Δx / T. Bajada</option><option value="subida" selected>Δx / T. Subida</option><option value="manual">Manual</option></select></div></label>
+            </form>
+            <div style="margin-top: 25px; display: flex; flex-wrap: wrap; gap: 15px; justify-content: start;">
+                <button class="btn btn-mark" onclick="addElectronEntry()"><i class="fa-solid fa-plus-circle"></i> Agregar Serie</button>
+                <button class="btn btn-export csv" onclick="downloadElectronCSV()"><i class="fa-solid fa-download"></i> Descargar CSV</button>
+                <button class="btn btn-clear" onclick="clearElectronTable()"><i class="fa-solid fa-trash-can"></i> Limpiar Tabla</button>
+                <a class="btn" id="whatsapp-share" target="_blank"><i class="fab fa-whatsapp"></i> Compartir Último</a>
+            </div>
+        </div>
+        <div class="card">
+            <h3><i class="fa-solid fa-table-list" style="color:var(--accent-color);"></i> Tabla de Resultados de Carga</h3>
+            <div style="overflow-x:auto;"><table id="electron-table"><thead><tr><th>Serie</th><th>T. Bajada (s)</th><th>T. Subida (s)</th><th>Vg (m/s)</th><th>Ve (m/s)</th><th>Carga q (C)</th></tr></thead><tbody id="electron-table-body"></tbody></table></div>
+        </div>
+    </div>
+</div>
+
+<footer class="main-footer">
+    <p>© 2025 Complemento de Laboratorio. Derechos reservados por Bonifacio Fernández.</p>
+</footer>
+
+<script>
+let isRunning = false, startTime = 0, timerInterval = null;
+let marks = [], measurements = [];
+let chartEvolution = null;
+let electronSeries = [];
+const display = document.getElementById('chronometer-display');
+const startStopBtn = document.getElementById('start-stop-btn');
+const lastMarkIndicator = document.getElementById('last-mark-indicator');
+const marksCountIndicator = document.getElementById('marks-count-indicator');
+const intervalsCountIndicator = document.getElementById('intervals-count-indicator');
+const resultsTbody = document.getElementById('results-tbody');
+const summaryDisplay = document.getElementById('summary-display');
+function formatTime(timeInSeconds) { const h = Math.floor(timeInSeconds / 3600), m = Math.floor((timeInSeconds % 3600) / 60); const s = Math.floor(timeInSeconds % 60), cs = Math.floor((timeInSeconds - Math.floor(timeInSeconds)) * 100); return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')},${String(cs).padStart(2, '0')}`; }
+function updateDisplay() { if(!isRunning) return; display.textContent = formatTime((performance.now() - startTime) / 1000); }
+function toggle() { if (isRunning) { isRunning = false; clearInterval(timerInterval); startStopBtn.innerHTML = '<i class="fa-solid fa-play"></i> Iniciar (Espacio)'; startStopBtn.classList.remove('btn-stop'); startStopBtn.classList.add('btn-start'); updateDisplay(); } else { isRunning = true; startTime = performance.now() - (marks.length > 0 ? marks[marks.length - 1] * 1000 : 0); timerInterval = setInterval(updateDisplay, 41); startStopBtn.innerHTML = '<i class="fa-solid fa-pause"></i> Parar (Espacio)'; startStopBtn.classList.add('btn-stop'); startStopBtn.classList.remove('btn-start'); } }
+function markTime() { if (!isRunning) { alert("Debes iniciar el cronómetro primero."); return; } const currentTime = (performance.now() - startTime) / 1000; marks.push(currentTime); if (marks.length >= 2) { processMeasurement(); } updateUI(); }
+function processMeasurement() { const t_anterior = marks[marks.length - 2], t_actual = marks[marks.length - 1]; const valor_calculado = t_actual - t_anterior, indice_intervalo = measurements.length + 1; const tipo_intervalo = indice_intervalo % 2 !== 0 ? "bajada" : "subida"; measurements.push({ n_int: indice_intervalo, tipo: tipo_intervalo, t_inicio: t_anterior, t_fin: t_actual, t_calc: valor_calculado }); }
+function clearData() { if (confirm("¿Estás seguro de que quieres borrar todos los datos del cronómetro, resultados y estadísticas? La tabla de 'Cálculo de Carga' NO se borrará.")) { isRunning = false; clearInterval(timerInterval); startTime = 0; marks = []; measurements = []; startStopBtn.innerHTML = '<i class="fa-solid fa-play"></i> Iniciar (Espacio)'; startStopBtn.classList.remove('btn-stop'); startStopBtn.classList.add('btn-start'); display.textContent = '00:00:00,00'; updateUI(); } }
+function updateUI() { lastMarkIndicator.textContent = marks.length > 0 ? `${marks[marks.length - 1].toFixed(3)} s` : '---'; marksCountIndicator.textContent = marks.length; intervalsCountIndicator.textContent = measurements.length; resultsTbody.innerHTML = measurements.map(m => `<tr class="row-${m.tipo}"><td>${m.n_int}</td><td>${m.tipo.charAt(0).toUpperCase() + m.tipo.slice(1)}</td><td>${m.t_inicio.toFixed(3).replace('.',',')}</td><td>${m.t_fin.toFixed(3).replace('.',',')}</td><td><b>${m.t_calc.toFixed(3).replace('.',',')}</b></td></tr>`).join(''); const bajada_vals = measurements.filter(m => m.tipo === 'bajada').map(m => m.t_calc); const subida_vals = measurements.filter(m => m.tipo === 'subida').map(m => m.t_calc); const avg = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0; summaryDisplay.textContent = `Promedio T_Bajada: ${avg(bajada_vals).toFixed(3).replace('.',',')} s | Promedio T_Subida: ${avg(subida_vals).toFixed(3).replace('.',',')} s`; if (document.getElementById('stats').classList.contains('active')) { updateStatistics(); } }
+function showTab(tabName) { document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active')); document.querySelectorAll('.tab-button').forEach(tb => tb.classList.remove('active')); document.getElementById(tabName).classList.add('active'); document.querySelector(`.tab-button[onclick="showTab('${tabName}')"]`).classList.add('active'); if (tabName === 'stats') { updateStatistics(); } }
+function updateStatistics() { const statsPlaceholder = document.getElementById('stats-placeholder'), statsContent = document.getElementById('stats-content'), exportControls = document.getElementById('export-controls'); if (measurements.length === 0) { statsPlaceholder.style.display = 'block'; statsContent.style.display = 'none'; exportControls.style.display = 'none'; return; } statsPlaceholder.style.display = 'none'; statsContent.style.display = 'block'; exportControls.style.display = 'flex'; const style = getComputedStyle(document.documentElement), chartGridColor = style.getPropertyValue('--chart-grid-color').trim(), chartTextColor = style.getPropertyValue('--chart-text-color').trim(); const chartOptions = { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { color: chartGridColor }, ticks: { color: chartTextColor, font: { family: 'Roboto' } }, title: { display: true, text: 'Número de Medición', color: chartTextColor, font: { family: 'Roboto', size: 14 } } }, y: { grid: { color: chartGridColor }, ticks: { color: chartTextColor, font: { family: 'Roboto' } }, title: {display: true, text: 'Tiempo (s)', color: chartTextColor, font: { family: 'Roboto', size: 14 }} } }, plugins: { legend: { labels: { color: chartTextColor, font: { family: 'Roboto', size: 12 } } }, title: { display: true, text: 'Evolución de los Tiempos Medidos', color: chartTextColor, font: { family: 'Roboto', size: 16 } } } }; if (chartEvolution) chartEvolution.destroy(); chartEvolution = new Chart(document.getElementById('evolution-chart').getContext('2d'), { type: 'line', data: { labels: measurements.map(m => m.n_int), datasets: [ { label: 'T Bajada', data: measurements.map(m => m.tipo === 'bajada' ? m.t_calc : NaN), borderColor: 'rgb(231, 76, 60)', backgroundColor: 'rgba(231, 76, 60, 0.5)', pointRadius: 5, pointHoverRadius: 7, spanGaps: false, tension: 0.1 }, { label: 'T Subida', data: measurements.map(m => m.tipo === 'subida' ? m.t_calc : NaN), borderColor: 'rgb(52, 152, 219)', backgroundColor: 'rgba(52, 152, 219, 0.5)', pointRadius: 5, pointHoverRadius: 7, spanGaps: false, tension: 0.1 } ] }, options: chartOptions }); const bajada_data = measurements.filter(m => m.tipo === 'bajada').map(m => m.t_calc), subida_data = measurements.filter(m => m.tipo === 'subida').map(m => m.t_calc); generateStatsTable(bajada_data, subida_data); }
+function generateStatsTable(bajada_data, subida_data) { const tableEl = document.getElementById('stats-table'); const stats = (data) => { const n = data.length; if (n === 0) return { n: 0, mean: 'N/A', median: 'N/A', std: 'N/A', min: 'N/A', max: 'N/A' }; const sorted = [...data].sort((a, b) => a - b), mean = data.reduce((a, b) => a + b, 0) / n; const median = n % 2 === 0 ? (sorted[n / 2 - 1] + sorted[n / 2]) / 2 : sorted[Math.floor(n / 2)]; const std = n > 1 ? Math.sqrt(data.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b, 0) / (n - 1)) : 'N/A'; return { n: n, mean: mean.toFixed(3), median: median.toFixed(3), std: std !== 'N/A' ? std.toFixed(3) : 'N/A', min: sorted[0].toFixed(3), max: sorted[n - 1].toFixed(3) }; }; const bajada_stats = stats(bajada_data), subida_stats = stats(subida_data); const metrics = ['N (cantidad)', 'Media', 'Mediana', 'Desv. Est. (Muestral)', 'Mínimo', 'Máximo']; const keys = ['n', 'mean', 'median', 'std', 'min', 'max']; let html = `<thead><tr><th>Métrica</th><th>T Bajada</th><th>T Subida</th></tr></thead><tbody>`; for(let i = 0; i < metrics.length; i++) { const key = keys[i]; html += `<tr><td><b>${metrics[i]}</b></td><td>${String(bajada_stats[key]).replace('.',',')}</td><td>${String(subida_stats[key]).replace('.',',')}</td></tr>`; } tableEl.innerHTML = html + `</tbody>`; }
+const loader = document.getElementById('loader'); function showLoader() { loader.style.display = 'flex'; } function hideLoader() { loader.style.display = 'none'; }
+async function exportPDF() { if (measurements.length < 1) return alert("No hay datos para exportar."); showLoader(); try { const { jsPDF } = window.jspdf; const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' }); const content = document.getElementById('stats-content'), bgColor = getComputedStyle(document.documentElement).getPropertyValue('--bg-secondary').trim(); const canvas = await html2canvas(content, { scale: 2, backgroundColor: bgColor }); const imgData = canvas.toDataURL('image/png'), imgProps = pdf.getImageProperties(imgData), pdfWidth = pdf.internal.pageSize.getWidth(); const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width; pdf.setFontSize(16); pdf.text("Informe de Resultados - Experimento Millikan", pdfWidth / 2, 15, { align: 'center' }); pdf.addImage(imgData, 'PNG', 10, 25, pdfWidth - 20, pdfHeight > 250 ? 250 : pdfHeight); pdf.save('informe_millikan.pdf'); } catch (e) { console.error(e); alert("Ocurrió un error al generar el PDF."); } finally { hideLoader(); } }
+
+// ===== FUNCIÓN MODIFICADA AQUÍ =====
+function generateCSVContent() {
+    if (measurements.length === 0) return null;
+    const temp = document.getElementById('param-temp').value || 'N/A';
+    const humidity = document.getElementById('param-humidity').value || 'N/A';
+    const voltage = document.getElementById('param-voltage').value || 'N/A';
+
+    let csv = "CONDICIONES DEL EXPERIMENTO\n";
+    csv += `Temperatura (C);"${temp}"\n`;
+    csv += `Humedad (%);"${humidity}"\n`;
+    csv += `Voltaje (V);"${voltage}"\n\n`;
+    
+    csv += "N_Int;Tipo;T_Inicio_s;T_Fin_s;T_Calculado_s\n";
+    measurements.forEach(row => { csv += [row.n_int, row.tipo, row.t_inicio.toFixed(3).replace('.',','), row.t_fin.toFixed(3).replace('.',','), row.t_calc.toFixed(3).replace('.',',')].join(";") + "\n"; });
+    csv += "\n\n--- ESTADISTICAS ---\n";
+    const statsTable = document.getElementById('stats-table');
+    if(statsTable && statsTable.rows.length > 0){
+        for(let i=0; i<statsTable.rows.length; i++){
+            const row = statsTable.rows[i], cells = Array.from(row.querySelectorAll('th, td')).map(cell => `"${cell.innerText.trim()}"`);
+            csv += cells.join(";") + "\n";
+        }
+    }
+    return csv;
+}
+
+function exportCSV() { const csvContent = generateCSVContent(); if (!csvContent) return alert("No hay datos para descargar."); const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement("a"), url = URL.createObjectURL(blob); link.setAttribute("href", url); link.setAttribute("download", "datos_cronometro_millikan.csv"); document.body.appendChild(link); link.click(); document.body.removeChild(link); }
+async function shareOrDownloadImage() { if (measurements.length < 1) return alert("No hay gráficos para exportar."); showLoader(); try { const content = document.getElementById('stats-content'), bgColor = getComputedStyle(document.documentElement).getPropertyValue('--bg-secondary').trim(); const canvas = await html2canvas(content, { backgroundColor: bgColor, scale: 3 }); if (navigator.share && navigator.canShare) { canvas.toBlob(async (blob) => { const file = new File([blob], 'resultados_millikan.jpg', { type: 'image/jpeg' }); if (navigator.canShare({ files: [file] })) { await navigator.share({ title: 'Resultados del Experimento', text: 'Estadísticas y gráficos del cronómetro Millikan.', files: [file] }); } else { downloadImage(canvas); } }, 'image/jpeg', 0.95); } else { downloadImage(canvas); } } catch(e) { console.error("Error al generar/compartir la imagen:", e); alert("Ocurrió un error al procesar la imagen."); } finally { hideLoader(); } }
+function downloadImage(canvas) { const link = document.createElement('a'); link.download = 'resultados_millikan.jpg'; link.href = canvas.toDataURL('image/jpeg', 0.9); link.click(); }
+async function shareCSV() { const csvContent = generateCSVContent(); if (!csvContent) return alert("No hay datos para compartir."); try { const file = new File([csvContent], "datos_millikan.csv", { type: "text/csv" }); if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ title: 'Datos del Experimento Millikan', files: [file] }); } else { alert("Tu navegador no soporta compartir archivos de este tipo."); } } catch (error) { if (error.name !== 'AbortError') { console.error("Error al compartir CSV:", error); alert("Ocurrió un error al intentar compartir el archivo."); } } }
+function addToAnalysis() { const bajadaVals = measurements.filter(m => m.tipo === 'bajada').map(m => m.t_calc); const subidaVals = measurements.filter(m => m.tipo === 'subida').map(m => m.t_calc); if (bajadaVals.length === 0 || subidaVals.length === 0) { alert("Debes registrar al menos un intervalo de bajada y uno de subida en la pestaña 'Cronómetro' para poder transferir los tiempos."); return; } const avg = arr => arr.reduce((a, b) => a + b, 0) / arr.length; const t_bajada_avg = avg(bajadaVals), t_subida_avg = avg(subidaVals); document.getElementById('t_bajada').value = t_bajada_avg.toFixed(5); document.getElementById('t_subida').value = t_subida_avg.toFixed(5); alert(`Tiempos promedio transferidos:\n- Bajada: ${t_bajada_avg.toFixed(3)} s\n- Subida: ${t_subida_avg.toFixed(3)} s`); showTab('electron'); }
+function addElectronEntry() { const η = parseFloat(document.getElementById('eta').value), g = parseFloat(document.getElementById('g').value), ρ = parseFloat(document.getElementById('rho').value); const V = parseFloat(document.getElementById('voltaje').value), d = parseFloat(document.getElementById('d').value), dx = parseFloat(document.getElementById('dx').value); const t_bajada = parseFloat(document.getElementById('t_bajada').value), t_subida = parseFloat(document.getElementById('t_subida').value); const modo_vg = document.getElementById('modo_vg').value, modo_ve = document.getElementById('modo_ve').value; let vg = parseFloat(document.getElementById('vg_manual').value), ve = parseFloat(document.getElementById('ve_manual').value); if ([η, g, ρ, V, d, dx].some(isNaN)) { alert("Faltan constantes físicas o sus valores son incorrectos. Por favor, revísalos."); return; } if (modo_vg === 'bajada') { if (isNaN(t_bajada) || t_bajada <= 0) { alert("El 'Tiempo de bajada' es inválido para calcular Vg."); return; } vg = dx / t_bajada; } else if (modo_vg === 'subida') { if (isNaN(t_subida) || t_subida <= 0) { alert("El 'Tiempo de subida' es inválido para calcular Vg."); return; } vg = dx / t_subida; } if (modo_ve === 'bajada') { if (isNaN(t_bajada) || t_bajada <= 0) { alert("El 'Tiempo de bajada' es inválido para calcular Ve."); return; } ve = dx / t_bajada; } else if (modo_ve === 'subida') { if (isNaN(t_subida) || t_subida <= 0) { alert("El 'Tiempo de subida' es inválido para calcular Ve."); return; } ve = dx / t_subida; } if (isNaN(vg) || isNaN(ve) || vg <= 0) { alert("Las velocidades Vg o Ve no son válidas. Verifica los modos de cálculo, los tiempos ingresados o los valores manuales. Vg debe ser mayor que cero."); return; } const factor = (6 * Math.PI * d / V) * Math.sqrt((9 * Math.pow(η, 3)) / (2 * g * ρ)); const q = factor * (vg + ve) * Math.sqrt(vg); if (isNaN(q) || !isFinite(q)) { alert("El cálculo de la carga 'q' ha fallado. Revisa todos los parámetros, especialmente que Vg no sea negativo y que el Voltaje (V) no sea cero."); return; } const entry = { serie: electronSeries.length + 1, t_bajada: isNaN(t_bajada) ? "—" : t_bajada.toFixed(5), t_subida: isNaN(t_subida) ? "—" : t_subida.toFixed(5), vg: vg.toExponential(3), ve: ve.toExponential(3), q: q.toExponential(3) }; electronSeries.push(entry); const tbody = document.getElementById("electron-table-body"), row = tbody.insertRow(); row.innerHTML = `<td>${entry.serie}</td><td>${entry.t_bajada.replace('.',',')}</td><td>${entry.t_subida.replace('.',',')}</td><td>${entry.vg.replace('.',',')}</td><td>${entry.ve.replace('.',',')}</td><td><b>${entry.q.replace('.',',')}</b></td>`; const msg = `Resultados Millikan - Serie ${entry.serie}: q = ${entry.q} C`; document.getElementById('whatsapp-share').href = `https://wa.me/?text=${encodeURIComponent(msg)}`; }
+function clearElectronTable() { if (electronSeries.length > 0 && confirm("¿Estás seguro de que quieres borrar todos los datos de la tabla de cálculo de carga?")) { electronSeries = []; document.getElementById('electron-table-body').innerHTML = ''; document.getElementById('whatsapp-share').href = `https://wa.me/?text=`; } else if (electronSeries.length === 0) { alert("La tabla de cálculo de carga ya está vacía."); } }
+function downloadElectronCSV() { if (electronSeries.length === 0) { alert("No hay datos en la tabla de cálculo para descargar."); return; } let csv = "Serie;T_Bajada (s);T_Subida (s);Vg (m/s);Ve (m/s);Carga q (C)\n"; electronSeries.forEach(e => { csv += [e.serie, e.t_bajada, e.t_subida, e.vg, e.ve, e.q].map(i => `"${String(i).replace('.',',')}"`).join(';') + "\n"; }); const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], { type: "text/csv;charset=utf-8;" }); const url = URL.createObjectURL(blob), a = document.createElement("a"); a.href = url; a.download = "calculo_carga_electron.csv"; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
+document.addEventListener('DOMContentLoaded', () => { const themeToggle = document.getElementById('theme-toggle'), docElement = document.documentElement; function applyTheme(theme) { docElement.setAttribute('data-theme', theme); localStorage.setItem('theme', theme); themeToggle.innerHTML = theme === 'dark' ? '☀️' : '🌙'; updateUI(); } const storedTheme = localStorage.getItem('theme') || 'dark'; applyTheme(storedTheme); themeToggle.addEventListener('click', () => { let newTheme = docElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light'; applyTheme(newTheme); }); if (navigator.share && navigator.canShare) { document.getElementById('share-csv-btn').style.display = 'flex'; } document.getElementById('modo_vg').addEventListener('change', (e) => { document.getElementById('vg_manual').disabled = (e.target.value !== 'manual'); }); document.getElementById('modo_ve').addEventListener('change', (e) => { document.getElementById('ve_manual').disabled = (e.target.value !== 'manual'); }); document.getElementById('vg_manual').disabled = (document.getElementById('modo_vg').value !== 'manual'); document.getElementById('ve_manual').disabled = (document.getElementById('modo_ve').value !== 'manual'); });
+document.addEventListener('keydown', (e) => { if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return; if (e.code === 'Space') { e.preventDefault(); toggle(); } else if (e.code === 'KeyU') { e.preventDefault(); markTime(); } });
+</script>
+</body>
+</html>

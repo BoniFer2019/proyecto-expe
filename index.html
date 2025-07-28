@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Portal de aplicaciones web para complementar experimentos de Física en FaCENA - UNNE, incluyendo herramientas para Millikan, Thoron y Espectrometría.">
+    <link rel="icon" type="image/x-icon" href="static/favicon.ico">
+    <title>Complemento de Laboratorio - Física Experimental I</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- RUTA CORREGIDA PARA FUNCIONAR EN GITHUB PAGES -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="logo-container">
+            <div class="logo">Complemento de Laboratorio</div>
+            <p class="header-subtitle">Física Experimental I</p>
+        </div>
+        <nav id="main-nav">
+            <ul class="nav-links">
+                <li><a href="#experimentos">Aplicaciones</a></li>
+                <li><a href="#features">Características</a></li>
+                <li><a href="#faq">FAQ</a></li>
+                <li><a href="#equipo">El Equipo</a></li>
+                <!-- Se eliminó el enlace a Contacto -->
+            </ul>
+        </nav>
+        <div class="header-controls">
+            <button id="theme-toggle" class="theme-toggle-btn" aria-label="Cambiar tema de color">
+                <i class="fas fa-moon"></i>
+            </button>
+            <button id="mobile-nav-toggle" class="mobile-nav-btn" aria-label="Abrir menú de navegación">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <!-- ===== SECCIÓN DE VIDEO ===== -->
+        <section id="intro-video" class="intro-video-section">
+            <h2>Bienvenido a Física Experimental I</h2>
+            <div class="video-container">
+                <iframe 
+                    class="intro-video-player"
+                    src="https://drive.google.com/file/d/1kkZ7aFe9pvtxL9hTPEfU8gdLTjsHs12A/preview"
+                    title="Video introductorio de Física Experimental" 
+                    frameborder="0" 
+                    allow="autoplay; encrypted-media" 
+                    allowfullscreen>
+                </iframe>
+            </div>
+        </section>
+
+        <!-- ===== SECCIÓN "SOBRE EL PROYECTO" ===== -->
+        <section id="about" class="about-section">
+            <div class="about-content animate-on-scroll">
+                <h2>Un Puente entre la Teoría y la Práctica</h2>
+                <p>
+                    Este portal nace como una iniciativa de la cátedra de <strong>Física Experimental I</strong> de FaCENA - UNNE. Nuestro objetivo es proveer a los estudiantes herramientas digitales interactivas que complementen y enriquezcan la experiencia práctica en el laboratorio, facilitando la recolección, el análisis y la visualización de datos experimentales.
+                </p>
+            </div>
+        </section>
+        
+        <section id="experimentos" class="experiments-section">
+            <h2>Aplicaciones Disponibles</h2>
+            <p>Descubre aplicaciones diseñadas para acompañar experimentos reales en el laboratorio. Permiten registrar datos, procesarlos y visualizar resultados en tiempo real, facilitando el trabajo práctico y mejorando la comprensión de los fenómenos físicos.</p>
+
+            <div class="experiments-grid">
+                
+                <div class="experiment-card animate-on-scroll">
+                    <!-- RUTA CORREGIDA -->
+                    <img src="static/images/millikan.png" alt="Ilustración del aparato del experimento de Millikan con gotas de aceite entre placas eléctricas.">
+                    <div class="card-content">
+                        <div class="card-title-container"><i class="fa-solid fa-droplet"></i><h3>Experimento de Millikan</h3></div>
+                        <p>Determinación de la carga del electrón mediante la observación de gotas de aceite.</p>
+                        <details class="theory-details">
+                            <summary>Fundamento Teórico</summary>
+                            <p>Basado en el trabajo de Thomson, el experimento de Millikan de 1909 fue crucial para medir la carga fundamental del electrón. La técnica consiste en suspender diminutas gotas de aceite en un campo eléctrico. Al medir la velocidad de caída libre de una gota (sin campo) se determina su masa, y al medir su velocidad de ascenso (con campo) se calcula la carga eléctrica total que ha adquirido. Millikan demostró que esta carga siempre era un múltiplo entero de una cantidad elemental, 1.6 x 10⁻¹⁹ C, confirmando así la cuantización de la carga eléctrica.</p>
+                        </details>
+                        <div class="card-buttons-container">
+                            <a href="experimento_millikan.html" class="card-button">Abrir Aplicación Web</a>
+                            <a href="https://drive.google.com/file/d/11XkBoiDJg1ZP8L3O71WxM8Lfm373k8Ry/view?usp=sharing" class="card-button secondary" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-book-open"></i> Guía</a>
+                            <a href="https://drive.google.com/uc?export=download&id=1sh_SQtw33v1XuYYE0uRGfhp_8uTdFToN" class="card-button secondary" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-windows"></i> Descargar</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="experiment-card animate-on-scroll">
+                    <!-- RUTA CORREGIDA -->
+                    <img src="static/images/radiacion.jpg" alt="Representación de un átomo emitiendo partículas alfa, simbolizando el decaimiento radiactivo.">
+                    <div class="card-content">
+                        <div class="card-title-container"><i class="fa-solid fa-radiation"></i><h3>Radiación Thoron</h3></div>
+                        <p>Análisis del decaimiento radiactivo y cálculo de la vida media del gas Thoron.</p>
+                         <details class="theory-details">
+                            <summary>Fundamento Teórico</summary>
+                            <p>Este experimento explora el decaimiento radiactivo, un proceso espontáneo en el que un núcleo atómico inestable (como el del gas Thoron, un isótopo del Radón) emite partículas para transformarse en un núcleo más estable. Se mide la actividad radiactiva a lo largo del tiempo para determinar la "vida media" (T₁/₂), que es el tiempo necesario para que la mitad de los núcleos de la muestra decaigan. Este valor es una constante característica de cada isótopo y es fundamental para entender la cinética de los procesos nucleares.</p>
+                        </details>
+                        <div class="card-buttons-container">
+                            <a href="experimento_thoron.html" class="card-button">Abrir Aplicación Web</a>
+                            <a href="https://drive.google.com/file/d/1FTKynYoJmkUZbqfFqfIu5aispEW-acNJ/view?usp=sharing" class="card-button secondary" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-book-open"></i> Guía</a>
+                            <a href="https://drive.google.com/uc?export=download&id=1uUjgUS9wMQ9vobU2gag33w0DLZxD9wjE" class="card-button secondary" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-windows"></i> Descargar</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="experiment-card animate-on-scroll">
+                    <!-- RUTA CORREGIDA -->
+                    <img src="static/images/espectrometria.jpeg" alt="Un prisma descomponiendo la luz blanca en los colores del espectro visible.">
+                    <div class="card-content">
+                        <div class="card-title-container"><i class="fa-solid fa-prism"></i><h3>Espectrometría</h3></div>
+                        <p>Calibración de un espectrómetro y análisis de espectros de emisión atómica mediante la fórmula de Hartmann.</p>
+                        <details class="theory-details">
+                            <summary>Fundamento Teórico</summary>
+                            <p>La espectrometría estudia cómo la luz interactúa con la materia. Este aparato utiliza un prisma de vidrio Flint para dispersar la luz en su espectro de colores, similar a un arcoíris. A diferencia de una red de difracción, la separación de colores en un prisma depende del índice de refracción del material. Para calibrar el sistema y determinar longitudes de onda desconocidas, se utiliza la fórmula de Hartmann, una relación empírica que conecta la posición de cada línea espectral en el visor con su longitud de onda correspondiente.</p>
+                        </details>
+                        <div class="card-buttons-container">
+                            <a href="experimento_espectrometria.html" class="card-button">Abrir Aplicación Web</a>
+                            <a href="https://drive.google.com/file/d/1VJxAeqyIMsYcAnOi7t8Q1lm3JEOcvMRT/view?usp=sharing" class="card-button secondary" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-book-open"></i> Guía</a>
+                            <a href="https://drive.google.com/uc?export=download&id=1y8OMC_GJ_YhtLKW-uLYzm8unGsthYisM" class="card-button secondary" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-windows"></i> Descargar</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="experiment-card animate-on-scroll">
+                    <!-- RUTA CORREGIDA -->
+                    <img src="static/images/gases-nobles.jpg" alt="Tubos de descarga de gases nobles brillantes, mostrando sus colores característicos de emisión.">
+                    <div class="card-content">
+                        <div class="card-title-container"><i class="fa-solid fa-atom"></i><h3>Espectroscopía de Gases</h3></div>
+                        <p>Identifica elementos desconocidos analizando sus únicos espectros de emisión con una red de difracción.</p>
+                        <details class="theory-details">
+                            <summary>Fundamento Teórico</summary>
+                            <p>Cada elemento químico, al ser excitado (por ejemplo, en un tubo de descarga de gas), emite luz en un conjunto único de longitudes de onda discretas. Este "espectro de emisión" actúa como una huella dactilar que permite identificar el elemento de forma inequívoca. En este experimento, se utiliza una red de difracción, una superficie con miles de finas ranuras por milímetro. La red descompone la luz incidente por el fenómeno de la difracción, proyectando el espectro característico del gas para su análisis.</p>
+                        </details>
+                        <div class="card-buttons-container">
+                            <a href="experimento_gases.html" class="card-button">Abrir Aplicación Web</a>
+                             <a href="https://drive.google.com/file/d/12sC2-5KuYli-z3vp6vCgC-lT88xSQep6/view?usp=sharing" class="card-button secondary" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-book-open"></i> Guía</a>
+                            <a href="https://drive.google.com/uc?export=download&id=1cXkG3n0BcoYY1UVM-18RsTrqi4LxWP9M" class="card-button secondary" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-windows"></i> Descargar</a>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </section>
+
+        <section id="features" class="features-section">
+            <h2 class="animate-on-scroll">Características Destacadas</h2>
+            <div class="features-grid">
+                <div class="feature-item animate-on-scroll"><i class="fas fa-chart-line"></i><h3>Procesamiento en Tiempo Real</h3><p>Registra datos directamente en la aplicación y observa cómo se procesan y grafican al instante.</p></div>
+                <div class="feature-item animate-on-scroll"><i class="fas fa-lightbulb"></i><h3>Facilita la Comprensión</h3><p>Al visualizar los resultados de forma inmediata, se refuerza la conexión entre la teoría y la práctica.</p></div>
+                <div class="feature-item animate-on-scroll"><i class="fas fa-hand-pointer"></i><h3>Interfaz Intuitiva</h3><p>Un diseño sencillo y claro que te permite enfocarte en el experimento y no en cómo usar la herramienta.</p></div>
+                <div class="feature-item animate-on-scroll"><i class="fas fa-cloud-download-alt"></i><h3>Acceso Flexible</h3><p>Utiliza la versión web para un acceso rápido o descarga la aplicación de escritorio para trabajar sin conexión.</p></div>
+            </div>
+        </section>
+
+        <section id="faq" class="faq-section">
+            <h2 class="animate-on-scroll">Preguntas Frecuentes</h2>
+            <div class="faq-container animate-on-scroll">
+                <details><summary>¿Necesito instalar algo para usar las aplicaciones?</summary><p>Para las aplicaciones web, no necesitas instalar nada; funcionan directamente en tu navegador. Para una experiencia offline, puedes descargar la versión para Windows si está disponible.</p></details>
+                <details><summary>¿Las aplicaciones y guías tienen algún costo?</summary><p>No. Todo el material ofrecido en esta plataforma es completamente gratuito y de libre acceso para estudiantes y docentes.</p></details>
+                <details><summary>¿Cómo puedo reportar un error o sugerir una mejora?</summary><p>¡Tu feedback es muy valioso! Puedes abrir un "Issue" (incidencia) directamente en el repositorio del proyecto en GitHub para reportar cualquier error o sugerir nuevas funcionalidades.</p></details>
+                <details><summary>¿Las aplicaciones web funcionan bien en un teléfono móvil?</summary><p>El sitio web es totalmente adaptable a móviles. Sin embargo, para la entrada y visualización de datos de los experimentos, recomendamos usar una tablet o una computadora para una mejor experiencia.</p></details>
+            </div>
+        </section>
+        
+        <section id="equipo" class="team-section">
+            <h2 class="animate-on-scroll">El Equipo Detrás del Proyecto</h2>
+            <div class="team-grid">
+                <div class="team-member-card animate-on-scroll">
+                    <!-- RUTA CORREGIDA -->
+                    <img src="static/images/foto-perfil.jpg" alt="Foto de Bonifacio Fernández">
+                    <h3>Bonifacio Fernández</h3>
+                    <h4>Creador y Desarrollador</h4>
+                    <p>Estudiante del Profesorado en Física. Desarrollé este portal para hacer el trabajo de laboratorio más intuitivo y conectar la teoría con la práctica de una forma interactiva, con el objetivo de ayudar a mis compañeros durante la cursada.</p>
+                </div>
+                <div class="team-member-card animate-on-scroll">
+                    <!-- RUTA CORREGIDA -->
+                    <img src="static/images/foto-julian.jpg" alt="Foto de Julián Vallejos">
+                    <h3>Prof. Julián Vallejos</h3>
+                    <h4>Supervisor del Proyecto</h4>
+                    <p>Docente y divulgador en nuevas tecnologías. Su supervisión técnica y su experiencia en la aplicación de la tecnología a la educación fueron clave para guiar el desarrollo de las herramientas de este portal.</p>
+                </div>
+                <div class="team-member-card animate-on-scroll">
+                    <!-- Esta es una URL externa, no necesita cambios -->
+                    <img src="https://imit.conicet.gov.ar/wp-content/uploads/sites/31/2021/04/Fernandez_Lucas.jpg" alt="Foto de Lucas J. Fernández">
+                    <h3>Dr. Lucas J. Fernández</h3>
+                    <h4>Titular de Cátedra</h4>
+                    <p>Investigador del CONICET y responsable de la materia. Brindó el respaldo académico y el espacio institucional para que este proyecto se llevara a cabo, asegurando su pertinencia pedagógica y científica.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SE ELIMINÓ TODA LA SECCIÓN DE CONTACTO DE AQUÍ -->
+        
+    </main>
+
+    <footer class="main-footer">
+        <div class="footer-tech">
+            <span>Desarrollado con</span>
+            <div class="tech-icons-container">
+                <i class="fab fa-html5" title="HTML5"></i>
+                <i class="fab fa-css3-alt" title="CSS3"></i>
+                <i class="fab fa-js" title="JavaScript"></i>
+            </div>
+        </div>
+        <p>&copy; 2025 Complemento de Laboratorio. Derechos reservados por Bonifacio Fernández.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const themeToggle = document.getElementById('theme-toggle');
+            const themeIcon = themeToggle.querySelector('i');
+            const body = document.body;
+            const lightThemeClass = 'light-mode', lightIcon = 'fa-sun', darkIcon = 'fa-moon';
+
+            const applyTheme = (theme) => {
+                if (theme === 'light') {
+                    body.classList.add(lightThemeClass);
+                    themeIcon.classList.remove(darkIcon);
+                    themeIcon.classList.add(lightIcon);
+                } else {
+                    body.classList.remove(lightThemeClass);
+                    themeIcon.classList.remove(lightIcon);
+                    themeIcon.classList.add(darkIcon);
+                }
+            };
+            const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            applyTheme(savedTheme);
+            themeToggle.addEventListener('click', () => {
+                const newTheme = body.classList.contains(lightThemeClass) ? 'dark' : 'light';
+                applyTheme(newTheme);
+                localStorage.setItem('theme', newTheme);
+            });
+
+            const mobileNavToggle = document.getElementById('mobile-nav-toggle');
+            const mainNav = document.getElementById('main-nav');
+            const navLinks = document.querySelectorAll('.nav-links a');
+            mobileNavToggle.addEventListener('click', () => {
+                mainNav.classList.toggle('nav-active');
+                const icon = mobileNavToggle.querySelector('i');
+                icon.classList.toggle('fa-bars');
+                icon.classList.toggle('fa-times');
+            });
+            navLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    mainNav.classList.remove('nav-active');
+                    const icon = mobileNavToggle.querySelector('i');
+                    icon.classList.add('fa-bars');
+                    icon.classList.remove('fa-times');
+                });
+            });
+
+            const sections = document.querySelectorAll('main section');
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.4 };
+            const sectionObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const navLink = document.querySelector(`nav a[href="#${entry.target.id}"]`);
+                        document.querySelectorAll('nav a').forEach(link => link.classList.remove('active-link'));
+                        if (navLink) navLink.classList.add('active-link');
+                    }
+                });
+            }, observerOptions);
+            sections.forEach(section => sectionObserver.observe(section));
+
+            const elementsToAnimate = document.querySelectorAll('.animate-on-scroll');
+            const animationObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
+            elementsToAnimate.forEach(el => animationObserver.observe(el));
+            
+            // SE ELIMINÓ EL SCRIPT DEL FORMULARIO DE CONTACTO DE AQUÍ
+        });
+    </script>
+
+</body>
+</html>
